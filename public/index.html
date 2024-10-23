@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Student Web App</title>
+        <script>
+            async function fetchStudents() {
+                const response = await fetch('/students');
+                const students = await response.json();
+                const table = document.getElementById('studentT able');
+                table.innerHTML = '';
+                students.forEach(student => {
+                    table.innerHTML += `<tr><td>${student.id}</td><td>${student.name}</td></tr>`;
+                });
+            }
+
+            async function addStudent() {
+                const name = document.getElementById('newName').value;
+                await fetch('/students', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                fetchStudents();
+            }
+        </script>
+    </head>
+    <body onload="fetchStudents()">
+        <h1>Student List</h1>
+        <table border="1">
+            <thead><tr><th>ID</th><th>Name</th></tr></thead>
+            <tbody id="studentT able"></tbody>
+        </table>
+        <h2>Add New Student</h2>
+        <input type="text" id="newName" placeholder="Student Name">
+        <button onclick="addStudent()">Add Student</button>
+    </body>
+</html>
