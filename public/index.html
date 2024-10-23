@@ -8,7 +8,7 @@
             async function fetchStudents() {
                 const response = await fetch('/students');
                 const students = await response.json();
-                const table = document.getElementById('studentT able');
+                const table = document.getElementById('studentTable');
                 table.innerHTML = '';
                 students.forEach(student => {
                     table.innerHTML += `<tr><td>${student.id}</td><td>${student.name}</td></tr>`;
@@ -30,7 +30,7 @@
         <h1>Student List</h1>
         <table border="1">
             <thead><tr><th>ID</th><th>Name</th></tr></thead>
-            <tbody id="studentT able"></tbody>
+            <tbody id="studentTable"></tbody>
         </table>
         <h2>Add New Student</h2>
         <input type="text" id="newName" placeholder="Student Name">
