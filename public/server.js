@@ -16,7 +16,7 @@ const pool = new Pool({
     host: 'localhost',
     database: 'cell_phone_company_db',
     password: 'group16!',
-    port: 5433,
+    port: 5434,
 });
 
 app.get('/', (req, res) => {
@@ -37,12 +37,12 @@ app.get('/customer', async (req, res) => {
 
 // Add a customer
 app.post('/customer', async (req, res) => {
-    console.log("POST Received");
-    const { first_name, last_name, dob, address } = req.body;
+    console.log("POST Received: ", req.body);
+    const { first_name, last_name, dob, address, phone } = req.body;
     try {
         await pool.query(
-            'INSERT INTO customer (first_name, last_name, dob, address) VALUES ($1, $2, $3, $4)',
-            [first_name, last_name, dob, address]
+            'INSERT INTO customer (first_name, last_name, dob, address, phone) VALUES ($1, $2, $3, $4, $5)',
+            [first_name, last_name, dob, address, phone]
         );
         res.sendStatus(201); // Successfully created
     } catch (err) {

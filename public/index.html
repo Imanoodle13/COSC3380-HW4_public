@@ -65,6 +65,7 @@
             const lastName = document.getElementById('custLN').value;
             const dob = document.getElementById('custDOB').value;
             const address = document.getElementById('custAddr').value;
+            const phone = document.getElementById('phone').value;
 
             try {
                 const response = await fetch('/customer', {
@@ -72,7 +73,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ first_name: firstName, last_name: lastName, dob, address })
+                    body: JSON.stringify({ first_name: firstName, last_name: lastName, dob, address, phone })
                 });
 
                 if (response.ok) {
@@ -228,6 +229,7 @@
         <input type="text"      id="custLN"     placeholder="Last Name"><br>
         <input type="date"      id="custDOB"><br>
         <input type="text"      id="custAddr"   placeholder="Address"><br>
+        <input type="text"      id="phone"   placeholder="Phone"><br>
         <button onclick="addCustomer()">Add Customer</button>
 
         <h2>Add Card</h2>
