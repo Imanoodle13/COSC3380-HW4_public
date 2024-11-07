@@ -3,76 +3,53 @@ DROP TABLE IF EXISTS plan_option	CASCADE;
 DROP TABLE IF EXISTS call			CASCADE;
 DROP TABLE IF EXISTS plan			CASCADE;
 DROP TABLE IF EXISTS bank_info		CASCADE;
-DROP TABLE IF EXISTS usage			CASCADE;
 DROP TABLE IF EXISTS billing		CASCADE;
-DROP TABLE IF EXISTS payment		CASCADE;
 
 /*LV1*/
 CREATE TABLE customer(
-  id			INT PRIMARY KEY,
+  phone			INT,			CONSTRAINT customer_pk PRIMARY KEY (phone), CONSTRAINT customer_pk_uq UNIQUE (phone),
   first_name	VARCHAR(100),
   last_name		VARCHAR(100),
   dob			DATE,
-  address		VARCHAR(50)
+  address		VARCHAR(50),
+  calls_placed	INT,
+  top_cust		BOOL
 );
 
 CREATE TABLE plan_option(
-  id		INT PRIMARY KEY,
+  id		INT,			CONSTRAINT plan_option_pk PRIMARY KEY (id), CONSTRAINT plan_option_pk_uq UNIQUE (id),
   name		VARCHAR(25),
-  discount	DECIMAL(5,2)
+  discount	DECIMAL(5,2)  
 );
 
 /*LV2*/
 CREATE TABLE call(
-  id		INT PRIMARY KEY,
-  cust_id	INT,
-  CONSTRAINT customer_fk FOREIGN KEY (cust_id) references customer(id)
+  id			INT,		CONSTRAINT call_pk PRIMARY KEY (id), CONSTRAINT call_pk_uq UNIQUE (id),
+  phone			INT,		CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
+  start_time	TIMESTAMP,
+  end_time		TIMESTAMP,
+  elapsed		INT
 );
 
 CREATE TABLE plan(
-  cust_id	INT UNIQUE,
-  plan_id	INT,
-  CONSTRAINT customer_fk FOREIGN KEY (cust_id) REFERENCES customer(id),
-  CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id)
+  phone		INT,	CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone), CONSTRAINT customer_fk_uq UNIQUE (phone),
+  plan_id	INT,	CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id)
 );
 
 CREATE TABLE bank_info(
-  cust_id	INT,
-  card_id	INT UNIQUE,
-  balance	DECIMAL(15,2),
-  CONSTRAINT customer_fk FOREIGN KEY (cust_id) REFERENCES customer(id)
+  phone		INT,			CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
+  card_id	INT,			CONSTRAINT bank_info_pk_uq UNIQUE(card_id),
+  balance	DECIMAL(15,2)
 );
 
 /* LV3 */
-CREATE TABLE usage(
-  id			INT PRIMARY KEY,
-  call_id		INT UNIQUE,
-  start_time	TIMESTAMP,
-  end_time		TIMESTAMP,
-  elapsed		INT,
-  CONSTRAINT call_fk FOREIGN KEY (call_id) REFERENCES call(id)
-);
-
-/* LV4 */
 CREATE TABLE billing(
-  id		INT PRIMARY KEY,
-  usage_id	INT UNIQUE,
-  plan_id	INT,
+  id		INT,			CONSTRAINT billing_pk PRIMARY KEY (id), CONSTRAINT billing_pk_uq UNIQUE (id),
+  phone		INT,			CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
+  call_id	INT,			CONSTRAINT call_fk FOREIGN KEY (call_id) REFERENCES call(id),
+  plan_id	INT,			CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id),
+  card_id	INT,			CONSTRAINT bank_info_fk FOREIGN KEY (card_id) REFERENCES bank_info(card_id),
   tax		DECIMAL(5,2),
   cost		DECIMAL(15,2),
-  CONSTRAINT usage_fk FOREIGN KEY (usage_id) REFERENCES usage(id),
-  CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id)
+  paid		DECIMAL(15,2) 
 );
-
-/* LV5 */
-CREATE TABLE payment(
-  id		INT PRIMARY KEY,
-  cust_id	INT,
-  card_id	INT,
-  bill_id	INT UNIQUE,
-  paid		DECIMAL(15,2),
-  CONSTRAINT customer_fk FOREIGN KEY (cust_id) REFERENCES customer(id),
-  CONSTRAINT bank_info_fk FOREIGN KEY (card_id) REFERENCES bank_info(card_id),
-  CONSTRAINT billing_fk FOREIGN KEY (bill_id) REFERENCES billing(id)
-);
-
