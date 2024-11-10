@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cell Phone Database</title>
+    <style>
+        body{
+            font-family: Calibri;
+            background-color: #0090d8; /**/
+        }
+
+        .table-list{
+            font-family: Calibri;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        table{
+            border-collapse: collapse;
+            width: 30%;
+        }
+
+        /* Default Table Color */
+        th, td{
+            padding: 8px;
+            text-align: left;
+            border: 1px solid rgb(161, 161, 161);
+            background-color: lightgray;
+        }
+
+        .form-container{
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+  <h1>
+    Cell Phone Database
+  </h1>
+  <div class="table-list">
+      <!-- CUSTOMER -->
+      <div>
+          <h2>Customer</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>First Name</th>
+                      <th>Last Name</th>
+                      <th>DOB</th>
+                      <th>Address</th>
+                      <th>Phone</th>
+                  </tr>
+              </thread>
+              <tbody id="customerTable"></tbody>
+          </table>
+      </div>
+
+      <!-- PLAN_OPTION -->
+      <div>
+          <h2>Plan Option</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>Plans</th>
+                      <th>Discount</th>
+                  </tr>
+              </thread>
+              <tbody id="planOptionTable"></tbody>
+          </table>
+      </div>
+
+      <!-- CALL -->
+      <div>
+          <h2>Call</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>Customer ID</th>
+                  </tr>
+              </thread>
+              <tbody id="callTable"></tbody>
+          </table>
+      </div>
+
+      <!-- PLAN -->
+      <div>
+          <h2>Plan</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>Customer ID</th>
+                      <th>Plan ID</th>
+                  </tr>
+              </thread>
+              <tbody id="planTable"></tbody>
+          </table>
+      </div>
+
+      <!-- BANK_INFO -->
+      <div>
+          <h2>Bank Info</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>Customer ID</th>
+                      <th>Card ID</th>
+                      <th>Balance</th>
+                  </tr>
+              </thread>
+              <tbody id="bankTable"></tbody>
+          </table>
+      </div>
+
+      <!-- USAGE -->
+      <div>
+          <h2>Usage</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>Call ID</th>
+                      <th>Start Time</th>
+                      <th>End Time</th>
+                      <th>Elapsed</th>
+                  </tr>
+              </thread>
+              <tbody id="usageTable"></tbody>
+          </table>
+      </div>
+
+      <!-- BILLING -->
+      <div>
+          <h2>Billing</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>Usage ID</th>
+                      <th>Plan ID</th>
+                      <th>Tax</th>
+                      <th>Cost</th>
+                  </tr>
+              </thread>
+              <tbody id="billingTable"></tbody>
+          </table>
+      </div>
+
+      <!-- PAYMENT -->
+      <div>
+          <h2>Payment</h2>
+          <table>
+              <thread>
+                  <tr>
+                      <th>ID</th>
+                      <th>Customer ID</th>
+                      <th>Card ID</th>
+                      <th>Bill ID</th>
+                      <th>Paid</th>
+                  </tr>
+              </thread>
+              <tbody id="paymentTable"></tbody>
+          </table>
+      </div>
+    </div>
+    <script src="frontendUtils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            getCustomers();
+
+            setInterval(getCustomers, 30000)
+        });
+    </script>
+</body>
+</html>
