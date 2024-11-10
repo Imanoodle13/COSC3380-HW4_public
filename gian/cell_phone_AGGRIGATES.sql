@@ -11,5 +11,5 @@ SELECT
 	END					AS "Top Caller(s)"
 FROM CUSTOMER
 JOIN CALL	ON CUSTOMER.phone = CALL.phone
-GROUP BY CUSTOMER.phone
+GROUP BY "Phone#"
 ORDER BY "Calls Placed" DESC;
