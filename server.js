@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
+const { normal_random } = require('./utils')
 
 const app = express();
 app.use(bodyParser.json());
@@ -16,7 +17,7 @@ const pool = new Pool({
     host: 'localhost',
     database: 'cell_phone_company_db',
     password: 'group16!',
-    port: 5434,
+    port: 5433,
 });
 
 app.get('/', (req, res) => {
@@ -67,17 +68,7 @@ app.put('/customer/:id', async (req, res) => {
     }
 });
 
-/* Delete a student by ID
-app.delete('/students/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await pool.query('DELETE FROM students WHERE id = $1', [id]);
-        res.sendStatus(200);
-    } catch (err) {
-        console.error(err.message);
-        res.sendStatus(500);
-    }
-});*/
+
 
 // Start the server
 app.listen(3000, () => {
