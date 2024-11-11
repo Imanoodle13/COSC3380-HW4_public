@@ -34,12 +34,13 @@
         }
 
     document.querySelector('button').addEventListener('click', addCustomer);
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            getCustomers();
 
-    document.addEventListener('DOMContentLoaded', () => {
-        getCustomers();
-
-        setInterval(getCustomers, 30000)
-    });
+            setInterval(getCustomers, 30000)
+        });
     </script>
 </head>
 <body>
