@@ -1,4 +1,4 @@
----------- FUNCTION ----------------------------------------------
+---------- TABLES -----------------------------------------------
 DROP TABLE IF EXISTS CUSTOMER		CASCADE;
 DROP TABLE IF EXISTS PLAN_OPTION	CASCADE;
 DROP TABLE IF EXISTS CARD			CASCADE;
