@@ -1,106 +1,151 @@
----------- FUNCTIONS ---------------------------------------------
-DROP FUNCTION IF EXISTS calculate_subtotal(INT);
-DROP FUNCTION IF EXISTS calculate_discount(INT);
-DROP FUNCTION IF EXISTS calculate_tax(INT);
-DROP FUNCTION IF EXISTS calculate_cost(INT);
+---------- FUNCTION ----------------------------------------------
+DROP FUNCTION IF EXISTS calculate_elapsed(TIMESTAMP,TIMESTAMP);
+DROP FUNCTION IF EXISTS calculate_call_cost(INT,INT);
+DROP FUNCTION IF EXISTS calculate_usage_cost(INT,INT);
+DROP FUNCTION IF EXISTS calculate_total_cost(INT,INT,INT);
 
-CREATE FUNCTION calculate_subtotal(c_id INT) RETURNS DECIMAL(15,2) AS $$
--- Calculates subtotal as a base to calulate for discount value and BILLING.tax.
-DECLARE
-	base_val	DECIMAL(3,2) := 0.83;	-- Base $/minute: ($0.83 per minute) 
-	subtotal	DECIMAL(15,2):= (SELECT elapsed FROM CALL WHERE id = c_id) * base_val;
-BEGIN
-	RETURN subtotal;
-END;
+CREATE FUNCTION calculate_elapsed(time_start TIMESTAMP, time_end TIMESTAMP) RETURNS INT AS $$
+-- For use by calculate_call_cost(INT) function.
+-- Calculates the elapsed time in minutes.
+	DECLARE
+		elapsed	INT	:= EXTRACT(EPOCH FROM (time_end::TIMESTAMP - time_start::TIMESTAMP)) / 60;
+	BEGIN
+		RETURN elapsed;
+	END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION calculate_discount(c_id INT) RETURNS DECIMAL(15,2) AS $$
--- Calculates dollar value of discount for final cost.
-DECLARE
-	subtotal		DECIMAL(15,2) := calculate_subtotal(c_id);
-	discount_imp	DECIMAL(5,2)  := (SELECT discount FROM PLAN_OPTION WHERE id = (SELECT plan_id FROM BILLING WHERE call_id = c_id)) / 100;
-	discount_amt	DECIMAL(15,2) := subtotal * discount_imp;
-BEGIN
-	RETURN discount_amt;
-END;
+CREATE FUNCTION calculate_call_cost(elapsed INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
+-- For use by calculate_total_cost(INT,INT) function.
+-- Calculates the cost of a call based on the customer's selected plan.
+/*
+If		(elapsed < c_limit):
+	call_cost = elapsed * c_rate;
+Else:
+	call_cost = (c_limit * c_rate) + (elapsed - c_limit) * c_over_rate;
+*/
+	DECLARE
+		c_rate		DECIMAL(5,2)	:= (SELECT c_rate		FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		c_over_rate	DECIMAL(5,2)	:= (SELECT c_over_rate	FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		c_limit		INT				:= (SELECT c_limit		FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		call_cost	DECIMAL(15,2)	:= 0;
+	BEGIN
+		IF		(elapsed < c_limit)	THEN
+			call_cost := elapsed * c_rate;
+		ELSE
+			call_cost := (c_limit * c_rate) + (elapsed - c_limit) * c_over_rate;
+		END IF;
+		RETURN call_cost;
+	END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION calculate_tax(c_id INT) RETURNS DECIMAL(15,2) AS $$
--- Calculates dollar value of tax for BILLING.tax.
-DECLARE
-	subtotal	DECIMAL(15,2) := calculate_subtotal(c_id);
-	tax			DECIMAL(5,2)  := 0.1;
-	tax_amt		DECIMAL(15,2) := subtotal * tax;
-BEGIN
-	RETURN tax_amt;
-END;
+-- Create calculate_usage_cost(INT)
+CREATE FUNCTION calculate_usage_cost(used INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
+-- For use by calculate_total_cost(INT,INT) function.
+-- Calculates the usage based on the customer's selected plan.
+/*
+If		(usage < u_limit):
+	usage_cost = usage * u_rate;
+Else:
+	usage_cost = (u_limit * u_rate) + (usage - u_limit) * u_over_rate;
+*/
+	DECLARE
+		u_rate		DECIMAL(5,2)	:= (SELECT u_rate		FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		u_over_rate	DECIMAL(5,2)	:= (SELECT u_over_rate	FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		u_limit		INT				:= (SELECT u_limit		FROM PLAN_OPTION WHERE option = (SELECT option FROM PLAN WHERE id = plan_id));
+		usage_cost	DECIMAL(15,2)	:= 0;
+	BEGIN
+		IF		(used < u_limit)	THEN
+			usage_cost := used * u_rate;
+		ELSE
+			usage_cost := (u_limit * u_rate) + (used - u_limit) * u_over_rate;
+		END IF;
+		RETURN usage_cost;
+	END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION calculate_cost(c_id INT) RETURNS DECIMAL(15,2) AS $$
--- Assumes discount and tax are of dollar value and not of percentage.
-DECLARE
-	subtotal	DECIMAL(15,2) := calculate_subtotal(c_id);
-	discount	DECIMAL(15,2) := calculate_discount(c_id);
-	tax			DECIMAL(15,2) := calculate_tax(c_id);
-	total_cost	DECIMAL(15,2) := subtotal + tax - discount;
-BEGIN
-	RETURN total_cost;
-END;
+-- Create calculate_total_cost(INT)
+CREATE FUNCTION calculate_total_cost(elapsed INT, used INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
+-- For use by BILL relation for attribute BILL.cost.
+-- Calculates the cost of the call and usage.
+	DECLARE
+		call_cost	DECIMAL(15,2)	:= calculate_call_cost(elapsed,plan_id);
+		usage_cost	DECIMAL(15,2)	:= calculate_usage_cost(used,plan_id);
+		total_cost	DECIMAL(15,2)	:= call_cost + usage_cost;
+	BEGIN
+		RETURN total_cost;
+	END;
 $$ LANGUAGE plpgsql;
 
----------- RELATIONS ---------------------------------------------
-DROP TABLE IF EXISTS customer		CASCADE;
-DROP TABLE IF EXISTS plan_option	CASCADE;
-DROP TABLE IF EXISTS call			CASCADE;
-DROP TABLE IF EXISTS plan			CASCADE;
-DROP TABLE IF EXISTS bank_info		CASCADE;
-DROP TABLE IF EXISTS billing		CASCADE;
+---------- TABLES ------------------------------------------------
+DROP TABLE IF EXISTS CUSTOMER		CASCADE;
+DROP TABLE IF EXISTS PLAN_OPTION	CASCADE;
+DROP TABLE IF EXISTS CARD			CASCADE;
+DROP TABLE IF EXISTS CALL			CASCADE;
+DROP TABLE IF EXISTS USAGE			CASCADE;
+DROP TABLE IF EXISTS PLAN			CASCADE;
+DROP TABLE IF EXISTS BILL			CASCADE;
+DROP TABLE IF EXISTS PAYMENT_HIST	CASCADE;
 
-/*LV1*/
-CREATE TABLE customer(
-  phone			INT,			CONSTRAINT customer_pk PRIMARY KEY (phone), CONSTRAINT customer_pk_uq UNIQUE (phone),
-  first_name	VARCHAR(100),
-  last_name		VARCHAR(100),
-  dob			DATE,
-  address		VARCHAR(50)
+/* LV1 */
+CREATE TABLE PLAN_OPTION(
+	Option		INT,			CONSTRAINT PLAN_OPTION_pk	PRIMARY KEY (Option),	CONSTRAINT PLAN_OPTION_uq	UNIQUE (Option),
+	C_rate		DECIMAL(5,2),
+	C_over_rate	DECIMAL(5,2),
+	C_limit		INT,
+	U_rate		DECIMAL(5,2),
+	U_over_rate	DECIMAL(5,2),
+	U_limit		INT
 );
 
-CREATE TABLE plan_option(
-  id		INT,			CONSTRAINT plan_option_pk PRIMARY KEY (id), CONSTRAINT plan_option_pk_uq UNIQUE (id),
-  name		VARCHAR(25),
-  discount	DECIMAL(5,2)  
-);
-
-/*LV2*/
-CREATE TABLE call(
-  id			INT,		CONSTRAINT call_pk PRIMARY KEY (id), CONSTRAINT call_pk_uq UNIQUE (id),
-  phone			INT,		CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
-  start_time	TIMESTAMP,
-  end_time		TIMESTAMP,
-  elapsed		INT
-);
-
-CREATE TABLE plan(
-  phone		INT,	CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone), CONSTRAINT customer_fk_uq UNIQUE (phone),
-  plan_id	INT,	CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id)
-);
-
-CREATE TABLE bank_info(
-  phone		INT,			CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
-  card_id	INT,			CONSTRAINT bank_info_pk_uq UNIQUE(card_id),
-  balance	DECIMAL(15,2)
+/* LV2 */
+CREATE TABLE PLAN(
+	ID			INT,	CONSTRAINT PLAN_pk 			PRIMARY KEY (ID),	CONSTRAINT PLAN_uq UNIQUE (ID),
+	Option		INT,	CONSTRAINT PLAN_OPTION_fk	FOREIGN KEY (Option) REFERENCES PLAN_OPTION(Option),
+	Signup_date	DATE
 );
 
 /* LV3 */
-CREATE TABLE billing(
-  id		INT,			CONSTRAINT billing_pk PRIMARY KEY (id), CONSTRAINT billing_pk_uq UNIQUE (id),
-  phone		INT,			CONSTRAINT customer_fk FOREIGN KEY (phone) REFERENCES customer(phone),
-  call_id	INT,			CONSTRAINT call_fk FOREIGN KEY (call_id) REFERENCES call(id),
-  plan_id	INT,			CONSTRAINT plan_option_fk FOREIGN KEY (plan_id) REFERENCES plan_option(id),
-  card_id	INT,			CONSTRAINT bank_info_fk FOREIGN KEY (card_id) REFERENCES bank_info(card_id),
-  subtotal	DECIMAL(15,2),
-  discount	DECIMAL(15,2),
-  tax		DECIMAL(15,2),
-  cost		DECIMAL(15,2),
-  paid		DECIMAL(15,2) 
+CREATE TABLE CUSTOMER(
+	Phone		VARCHAR(12),	CONSTRAINT CUSTOMER_pk	PRIMARY KEY (Phone),	CONSTRAINT CUSTOMER_uq UNIQUE (Phone),
+	First_name	VARCHAR(100),
+	Last_name	VARCHAR(100),
+	Dob			DATE,
+	Address		VARCHAR(50),
+	Plan_ID		INT,			CONSTRAINT PLAN_fk		FOREIGN KEY (Plan_ID) REFERENCES PLAN(ID),
+	Enroll_date	DATE
+);
+
+CREATE TABLE BILL(
+	Plan_ID		INT,			CONSTRAINT PLAN_fk				FOREIGN KEY (Plan_ID) REFERENCES PLAN(ID),
+	Start_date	DATE,			CONSTRAINT BILL_composite_pk	PRIMARY KEY (Plan_ID,Start_date),
+	End_date	DATE,
+	Cost		DECIMAL(15,2),
+	Payment		DECIMAL(15,2),
+	Paid		BOOL
+);
+
+/* LV4 */
+CREATE TABLE CARD(
+	ID		INT,			CONSTRAINT CARD_pk		PRIMARY KEY (ID),
+	Phone	VARCHAR(12),	CONSTRAINT CUSTOMER_fk	FOREIGN KEY (Phone) REFERENCES CUSTOMER(Phone),
+	Balance	DECIMAL(15,2)
+);
+
+CREATE TABLE CALL(
+	Phone		VARCHAR(12),	CONSTRAINT CUSTOMER_fk			FOREIGN KEY (Phone) REFERENCES CUSTOMER(Phone),
+	Start_time	TIMESTAMP,		CONSTRAINT CALL_composite_pk	PRIMARY KEY (Phone,Start_time),
+	End_time	TIMESTAMP
+);
+
+CREATE TABLE USAGE(
+	Phone		VARCHAR(12),	CONSTRAINT CUSTOMER_fk			FOREIGN KEY (Phone) REFERENCES CUSTOMER(Phone),
+	Date_rec	DATE,			CONSTRAINT USAGE_composite_pk	PRIMARY KEY (Phone,Date_rec),
+	Used		INT
+);
+
+/* LV5 */
+CREATE TABLE PAYMENT_HIST(
+	Card_id		INT,			CONSTRAINT CARD_fk						FOREIGN KEY (Card_id) REFERENCES CARD(ID),
+	Date_rec	DATE,			CONSTRAINT PAYMENT_HIST_composite_pk	PRIMARY KEY (Card_id,Date_rec),
+	Amount		DECIMAL(15,2)
 );
