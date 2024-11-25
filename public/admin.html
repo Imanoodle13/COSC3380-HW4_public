@@ -5,170 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="frontendUtils.js"></script>
     <link rel="stylesheet" href="/styles.css">
+
     <script>
-        async function addCustomer() {
-            const firstName = document.getElementById('custFN').value;
-            const lastName = document.getElementById('custLN').value;
-            const dob = document.getElementById('custDOB').value;
-            const address = document.getElementById('custAddr').value;
-            const phone = document.getElementById('phone').value;
-
-            try {
-                const response = await fetch('/customer', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ first_name: firstName, last_name: lastName, dob, address, phone })
-                });
-
-                if (response.ok) {
-                    alert('Customer added successfully');
-                    getCustomers(); // Refresh the table after adding
-                } else {
-                    alert('Error adding customer');
-                }
-            } catch (error) {
-                console.error('Error adding customer:', error);
-            }
-        }
-
+    addCustomer()
     document.querySelector('button').addEventListener('click', addCustomer);
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            getCustomers();
 
-            setInterval(getCustomers, 30000)
-        });
-    </script>
 </head>
 <body>
     <div class="container">
         <!-- Table Section -->
-        <div class="table-section">
-            <h2>Data Tables</h2>
-            <div class="table-list">
-                <div>
-                    <h3>Customer</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>DOB</th>
-                                <th>Address</th>
-                                <th>Phone</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Plan Option</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Plans</th>
-                                <th>Discount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="planOptionTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Call</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Customer ID</th>
-                            </tr>
-                        </thead>
-                        <tbody id="callTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Plan</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Customer ID</th>
-                                <th>Plan ID</th>
-                            </tr>
-                        </thead>
-                        <tbody id="planTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Bank Info</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Customer ID</th>
-                                <th>Card ID</th>
-                                <th>Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bankTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Usage</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Call ID</th>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Elapsed</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usageTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Billing</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usage ID</th>
-                                <th>Plan ID</th>
-                                <th>Tax</th>
-                                <th>Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody id="billingTable"></tbody>
-                    </table>
-                </div>
-                
-                <div>
-                    <h3>Payment</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Customer ID</th>
-                                <th>Card ID</th>
-                                <th>Bill ID</th>
-                                <th>Paid</th>
-                            </tr>
-                        </thead>
-                        <tbody id="paymentTable"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+       <div class="button-container">
+           <button onclick="window.location.href='tableView.html'">View Database Tables</button>
+       </div>
 
         <!-- Form Section -->
         <div class="form-section">
@@ -176,6 +25,10 @@
             <div class="form-container">
                 <div>
                     <h3>Add Customer</h3>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="text" id="phone" placeholder="Phone">
+                    </div>
                     <div class="form-group">
                         <label for="custFN">First Name</label>
                         <input type="text" id="custFN" placeholder="First Name">
@@ -193,8 +46,8 @@
                         <input type="text" id="custAddr" placeholder="Address">
                     </div>
                     <div class="form-group">
-                        <label for="phone">Phone</label>
-                        <input type="text" id="phone" placeholder="Phone">
+                        <label for="planID">Plan ID</label>
+                        <input type="number" id="planID" placeholder="Plan ID">
                     </div>
                     <button onclick="addCustomer()">Add Customer</button>
                 </div>
