@@ -3,37 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Cell Phone Database</title>
-    <style>
-        body{
-            font-family: Calibri;
-            background-color: #0090d8; /**/
-        }
-
-        .table-list{
-            font-family: Calibri;
-            font-size: 10px;
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-        }
-        table{
-            border-collapse: collapse;
-            width: 30%;
-        }
-
-        /* Default Table Color */
-        th, td{
-            padding: 8px;
-            text-align: left;
-            border: 1px solid rgb(161, 161, 161);
-            background-color: lightgray;
-        }
-
-        .form-container{
-            gap: 10px;
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <h1>
@@ -44,16 +14,17 @@
       <div>
           <h2>Customer</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
-                      <th>ID</th>
+                      <th>Phone</th>
                       <th>First Name</th>
                       <th>Last Name</th>
                       <th>DOB</th>
                       <th>Address</th>
-                      <th>Phone</th>
+                      <th>Plan ID</th>
+                      <th>Enrollment Date</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="customerTable"></tbody>
           </table>
       </div>
@@ -62,13 +33,17 @@
       <div>
           <h2>Plan Option</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
-                      <th>ID</th>
-                      <th>Plans</th>
-                      <th>Discount</th>
+                      <th>Option</th>
+                      <th>Call Rate ($ / min)</th>
+                      <th>Call Rate Over Limit ($ / min)</th>
+                      <th>Call Limit (min)</th>
+                      <th>Usage Rate ($ / MB)</th>
+                      <th>Usage Rate Over Limit ($ / MB)</th>
+                      <th>Usage Limit (MB)</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="planOptionTable"></tbody>
           </table>
       </div>
@@ -77,12 +52,12 @@
       <div>
           <h2>Call</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
                       <th>ID</th>
                       <th>Customer ID</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="callTable"></tbody>
           </table>
       </div>
@@ -91,12 +66,13 @@
       <div>
           <h2>Plan</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
-                      <th>Customer ID</th>
                       <th>Plan ID</th>
+                      <th>Plan Option</th>
+                      <th>Plan Start Date</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="planTable"></tbody>
           </table>
       </div>
@@ -171,6 +147,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             getCustomers();
+            getPlanOptions();
+            getPlan();
 
             setInterval(getCustomers, 30000)
         });

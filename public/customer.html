@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Payment Portal (WIP)</title>
+    <script src="frontendUtils.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+
+    </style>
+</head>
+<body>
+    <div>
+        <h2>Available Plans</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Call Rate</th>
+                    <th>Call Limit</th>
+                    <th>Over Limit Call Rate</th>
+                    <th>Data Usage Rate</th>
+                    <th>Data Usage Limit</th>
+                    <th>Over Limit Data Usage Rate</th>
+                </tr>
+            </thead>
+            <tbody id="planOptionTable"></tbody>
+        </table>
+    </div>
+
+    <!-- Forms -->
+    <div class="form-container">
+        <h3>New Plan</h3>
+        <div class="form-group">
+            <label for="planOption">Plan Option</label>
+            <input type="number" id="planOption" placeholder="Plan Option">
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" placeholder="Phone">
+        </div>
+        <div class="form-group">
+            <label for="custFN">First Name</label>
+            <input type="text" id="custFN" placeholder="First Name">
+        </div>
+        <div class="form-group">
+            <label for="custLN">Last Name</label>
+            <input type="text" id="custLN" placeholder="Last Name">
+        </div>
+        <div class="form-group">
+            <label for="custDOB">Date of Birth</label>
+            <input type="date" id="custDOB">
+        </div>
+        <div class="form-group">
+            <label for="custAddr">Address</label>
+            <input type="text" id="custAddr" placeholder="Address">
+        </div>
+        <button onclick="createPlan()">Create Plan</button>
+    </div>
+
+    <!--Load plan options on startup-->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+           getPlanOptions();
+        });
+    </script>
+</body>
+</html>
