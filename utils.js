@@ -1,5 +1,4 @@
 // Backend Functions
-
 function normal_random(mean=0, sd=1) {
     const u = 1 - Math.random();
     const v = Math.random();
@@ -7,5 +6,4 @@ function normal_random(mean=0, sd=1) {
 
     return z * sd + mean;
 }
-
 

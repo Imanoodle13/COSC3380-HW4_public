@@ -43,17 +43,31 @@ app.get('/customer', async (req, res) => {
 // Add a customer
 app.post('/customer', async (req, res) => {
     console.log("POST Received: ", req.body);
+    const client = await pool.connect();
+
     const today = new Date();
     const { phone, first_name, last_name, dob, address, plan_id } = req.body;
     try {
-        await pool.query(
+        await client.query('BEGIN');
+        // Check if the entered plan exists:
+        const planCheck = await client.query('Select * FROM PLAN WHERE ID = $1', [plan_id]);
+        if (planCheck.rowCount === 0) {
+            return res.status(400).json({ error: 'Plan does not exist!'});
+        }
+
+        await client.query(
             'INSERT INTO customer (phone, first_name, last_name, dob, address, plan_id, enroll_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [phone, first_name, last_name, dob, address, plan_id, today]
         );
-        res.sendStatus(201); // Successfully created
+
+        await client.query('COMMIT');
+        res.sendStatus(201); // Success
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err.message);
         res.sendStatus(500);
+    } finally {
+        client.release();
     }
 });
 
@@ -95,26 +109,35 @@ app.get('/plan', async (req, res) => {
    }
 });
 
-//Create a Plan
-app.post('/plan', async (req, res) => {
+//Create a plan with an initial customer
+app.post('/customer-plan', async (req, res) => {
     console.log('Plan Option POST received: ', req.body);
-    const { option, phone, first_name, last_name, dob, address } = req.body;
-    try {
-        const today = new Date();
+    const { option, phone, first_name, last_name, dob, address, enroll_date } = req.body;
 
-        const result = await pool.query(
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
             'INSERT INTO plan (Option, Signup_date) VALUES ($1, $2) RETURNING ID',
-            [option, today]
+            [option, enroll_date]
         );
         const planID = result.rows[0].id;
 
-        await pool.query(
+        await client.query(
             'INSERT INTO customer (Phone, First_name, Last_name, Dob, Address, Plan_ID, Enroll_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [phone, first_name, last_name, dob, address, planID, today]
+            [phone, first_name, last_name, dob, address, planID, enroll_date]
         );
+
+        await client.query('COMMIT');
+        res.sendStatus(201); //Success
     } catch (err) {
+        await client.query('ROLLBACK')
         console.error(err.message);
         res.sendStatus(500);
+    } finally {
+        client.release();
     }
 });
 

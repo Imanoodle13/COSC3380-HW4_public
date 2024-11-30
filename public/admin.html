@@ -6,10 +6,6 @@
     <script src="frontendUtils.js"></script>
     <link rel="stylesheet" href="/styles.css">
 
-    <script>
-    addCustomer()
-    document.querySelector('button').addEventListener('click', addCustomer);
-    </script>
 
 </head>
 <body>
@@ -18,13 +14,32 @@
        <div class="button-container">
            <button onclick="window.location.href='tableView.html'">View Database Tables</button>
        </div>
+        <!-- Random Generation -->
+       <div>
+           <label for="planCount">Number of plans to generate with initial customer:</label>
+           <input type="number" id="planCount" min="1" value="5">
+           <button onclick="generatePlans()">Generate Plans</button>
+       </div>
+        <p id="planTimeTaken"></p>
+       <div>
+           <label for="customerCount">Number of customers to generate for existing plans:</label>
+           <input type="number" id="customerCount" min="1" value="10">
+           <button onclick="generateCustomers()">Generate Customers</button>
+       </div>
+        <p id="customerTimeTaken"></p>
+
+       <div>
+           <label for="callCount">Number of calls to generate:</label>
+           <input type="number" id="callCount" min="1" value="20">
+           <button onclick="generateCalls()">Generate Calls</button>
+       </div>
 
         <!-- Form Section -->
         <div class="form-section">
             <h2>Forms</h2>
             <div class="form-container">
                 <div>
-                    <h3>Add Customer</h3>
+                    <h3>Add Customer to Existing Plan</h3>
                     <div class="form-group">
                         <label for="phone">Phone</label>
                         <input type="text" id="phone" placeholder="Phone">
@@ -67,19 +82,6 @@
                         <input type="number" id="cardBal" placeholder="Balance">
                     </div>
                     <button onclick="">Add Card</button>
-                </div>
-
-                <div>
-                    <h3>Assign Plan</h3>
-                    <div class="form-group">
-                        <label for="apCust">Customer ID</label>
-                        <input type="number" id="apCust" placeholder="Select Customer ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="apPlan">Plan ID</label>
-                        <input type="number" id="apPlan" placeholder="Plan ID">
-                    </div>
-                    <button onclick="assignPlan()">Assign Plan</button>
                 </div>
             </div>
 
