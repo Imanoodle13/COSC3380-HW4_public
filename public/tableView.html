@@ -7,28 +7,14 @@
 </head>
 <body>
   <h1>
-    Cell Phone Database
+    Cell Phone Company Database
   </h1>
-  <div class="table-list">
-      <!-- CUSTOMER -->
-      <div>
-          <h2>Customer</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Phone</th>
-                      <th>First Name</th>
-                      <th>Last Name</th>
-                      <th>DOB</th>
-                      <th>Address</th>
-                      <th>Plan ID</th>
-                      <th>Enrollment Date</th>
-                  </tr>
-              </thead>
-              <tbody id="customerTable"></tbody>
-          </table>
-      </div>
 
+  <div class="button-container" style="margin-bottom: 30px">
+      <button onclick="window.location.href='admin.html'">Admin Portal</button>
+  </div>
+
+  <div class="table-list">
       <!-- PLAN_OPTION -->
       <div>
           <h2>Plan Option</h2>
@@ -48,20 +34,6 @@
           </table>
       </div>
 
-      <!-- CALL -->
-      <div>
-          <h2>Call</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>ID</th>
-                      <th>Customer ID</th>
-                  </tr>
-              </thead>
-              <tbody id="callTable"></tbody>
-          </table>
-      </div>
-
       <!-- PLAN -->
       <div>
           <h2>Plan</h2>
@@ -77,35 +49,37 @@
           </table>
       </div>
 
-      <!-- BANK_INFO -->
+      <!-- CUSTOMER -->
       <div>
-          <h2>Bank Info</h2>
+          <h2>Customer</h2>
           <table>
-              <thread>
+              <thead>
+                  <tr>
+                      <th>Phone</th>
+                      <th>First Name</th>
+                      <th>Last Name</th>
+                      <th>DOB</th>
+                      <th>Address</th>
+                      <th>Plan ID</th>
+                      <th>Enrollment Date</th>
+                  </tr>
+              </thead>
+              <tbody id="customerTable"></tbody>
+          </table>
+      </div>
+
+      <!-- CARD_INFO -->
+      <div>
+          <h2>Card Info</h2>
+          <table>
+              <thead>
                   <tr>
                       <th>Customer ID</th>
                       <th>Card ID</th>
                       <th>Balance</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="bankTable"></tbody>
-          </table>
-      </div>
-
-      <!-- USAGE -->
-      <div>
-          <h2>Usage</h2>
-          <table>
-              <thread>
-                  <tr>
-                      <th>ID</th>
-                      <th>Call ID</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
-                      <th>Elapsed</th>
-                  </tr>
-              </thread>
-              <tbody id="usageTable"></tbody>
           </table>
       </div>
 
@@ -113,7 +87,7 @@
       <div>
           <h2>Billing</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
                       <th>ID</th>
                       <th>Usage ID</th>
@@ -121,7 +95,7 @@
                       <th>Tax</th>
                       <th>Cost</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="billingTable"></tbody>
           </table>
       </div>
@@ -130,7 +104,7 @@
       <div>
           <h2>Payment</h2>
           <table>
-              <thread>
+              <thead>
                   <tr>
                       <th>ID</th>
                       <th>Customer ID</th>
@@ -138,19 +112,54 @@
                       <th>Bill ID</th>
                       <th>Paid</th>
                   </tr>
-              </thread>
+              </thead>
               <tbody id="paymentTable"></tbody>
           </table>
       </div>
+
+      <!-- CALL -->
+      <div>
+          <h2>Call</h2>
+          <table>
+              <thead>
+                  <tr>
+                      <th>Phone Number</th>
+                      <th>Start Time</th>
+                      <th>End Time</th>
+                  </tr>
+              </thead>
+              <tbody id="callTable"></tbody>
+          </table>
+      </div>
+
+      <!-- USAGE -->
+      <div>
+          <h2>Usage</h2>
+          <table>
+              <thead>
+                  <tr>
+                      <th>ID</th>
+                      <th>Call ID</th>
+                      <th>Start Time</th>
+                      <th>End Time</th>
+                      <th>Elapsed</th>
+                  </tr>
+              </thead>
+              <tbody id="usageTable"></tbody>
+          </table>
+      </div>
+
     </div>
+
     <script src="frontendUtils.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             getCustomers();
             getPlanOptions();
             getPlan();
+            getCalls();
 
-            setInterval(getCustomers, 30000)
+            setInterval(getCustomers, 60000) // refresh every minute
         });
     </script>
 </body>

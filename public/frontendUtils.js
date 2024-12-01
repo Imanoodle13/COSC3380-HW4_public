@@ -118,6 +118,25 @@ async function createPlan() {
     }
 }
 
+async function getCalls() {
+    try {
+        const response = await fetch('/call');
+        const calls = await response.json();
+
+        const callsTable = document.getElementById('callTable');
+        callsTable.innerHTML = '';
+
+        calls.forEach(call => {
+            const row = callsTable.insertRow();
+            row.insertCell(0).textContent = call.phone;
+            row.insertCell(1).textContent = call.start_time;
+            row.insertCell(2).textContent = call.end_time;
+        });
+    } catch (err) {
+        console.error('Error populating calls table: ', err);
+    }
+}
+
 async function addCard() {
 
 }
@@ -133,15 +152,38 @@ function randomDate(start, end) {
     return date.toISOString().split('T')[0];
 }
 
+function randomTimestamp(start_date, end_date) {
+    const start_time = start_date.getTime();
+    const end_time = end_date.getTime();
+
+    return new Date(Math.random() * (end_time - start_time) + start_time);
+}
+
+function normal_random(mean=0, sd=1) {
+    const u = 1 - Math.random();
+    const v = Math.random();
+    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos( 2.0 * Math.PI * v );
+
+    return z * sd + mean;
+}
+
 // Functions for generating random customers and plans
 
-function randomPhoneNumber() {
+async function randomPhoneNumber() {
     // const country_code = randomInt(1, 9); Add later if doing international calls
-    const num1 = randomInt(100, 999);
-    const num2 = randomInt(100, 999);
-    const num3 = randomInt(1000, 9999);
+    const response = await fetch('/customer'); //list of existing customers
+    const customers = await response.json();
+    const numbers = customers.map(customer => customer.phone);
 
-    return `(${num1})${num2}-${num3}`
+    let phone_number;
+    do {
+        const num1 = randomInt(100, 999);
+        const num2 = randomInt(100, 999);
+        const num3 = randomInt(1000, 9999);
+        phone_number = `(${num1})${num2}-${num3}`;
+    } while (numbers.includes(phone_number)); //ensure phone number is unique
+
+    return phone_number;
 }
 
 function randomNames() {
@@ -181,7 +223,7 @@ async function generatePlans() {
     try {
         for (let i = 0; i < count; i++) {
             const option = plan_options[randomInt(0, plan_options.length - 1)].option;
-            const phone = randomPhoneNumber();
+            const phone = await randomPhoneNumber();
             const {firstName, lastName} = randomNames();
             const dob = randomDate(new Date(1950, 0, 1), new Date(2006, 11, 31))
             const address = randomAddress();
@@ -215,7 +257,6 @@ async function generatePlans() {
         document.getElementById('planTimeTaken').innerText =
             `Time to process: ${elapsed.toFixed()} ms`;
 
-        alert("Plans created successfully")
     } catch (err) {
         console.log('Error adding plan in batch: ', err);
     }
@@ -226,14 +267,19 @@ async function randomPlan() {
     try {
         const response = await fetch('/plan');
         const plans = await response.json();
+        const index = randomInt(0, plans.length - 1);
 
-        return plans[randomInt(0, plans.length - 1)].id;
+        return {
+            plan_id: plans[index].id,
+            signup_date: new Date(plans[index].signup_date),
+        };
     } catch (err) {
         console.error('Error fetching random plan: ', err);
         return null;
     }
 }
 
+// Generate customers for existing plans
 async function generateCustomers() {
     const startTime = performance.now();
 
@@ -243,11 +289,14 @@ async function generateCustomers() {
 
     try {
         for(let i = 0; i < count; i++) {
-            const phone = randomPhoneNumber();
+            const phone = await randomPhoneNumber();
             const {firstName, lastName} = randomNames();
             const dob = randomDate(new Date(1950, 0, 1), new Date(2006, 11, 31))
             const address = randomAddress();
+
             const plan = await randomPlan();
+            const index = randomInt(0, plan.length - 1);
+            const random_enrollment = randomDate(new Date(plan.signup_date), new Date());
 
             const customer = {
                 phone,
@@ -255,7 +304,8 @@ async function generateCustomers() {
                 last_name : lastName,
                 dob,
                 address,
-                plan_id: plan,
+                plan_id: plan.plan_id,
+                enroll_date: random_enrollment,
             };
 
             promises.push(
@@ -267,7 +317,6 @@ async function generateCustomers() {
                     body: JSON.stringify(customer),
                 })
             );
-
         }
         const results = await Promise.all(promises);
 
@@ -276,12 +325,80 @@ async function generateCustomers() {
         document.getElementById('customerTimeTaken').innerText =
             `Time to process: ${elapsed.toFixed()} ms`;
 
-        alert(`${count} customers added successfully!`)
     } catch (err) {
         console.error('Error adding customers: ', err);
     }
 }
 
 async function generateCalls() {
+    const startTime = performance.now();
 
+    const count = parseInt(document.getElementById('callCount').value);
+
+    const promises = []; // for batch request
+
+    const response = await fetch('/customer'); //list of existing customers
+    const customers = await response.json();
+
+    const numbers = customers.map(customer => customer.phone);
+    const enrollments = customers.map(customer => customer.enroll_date);
+
+    try {
+        for(let i = 0; i < count; i++) {
+            const index = randomInt(0, numbers.length - 1);
+
+            const number = numbers[index];
+
+            const start = randomTimestamp(new Date(enrollments[index]), new Date()); // start the call after they enroll, up until today
+
+            let duration = normal_random(20 * 60000, 5 * 60000); //convert from ms to minutes
+            if (duration <= 10 * 1000) {
+                duration = 30 * 1000; // If invalid duration, set to 30 seconds
+            }
+            const end = new Date(start.getTime() + duration)
+        const call = {
+                phone: number,
+                start_time: start,
+                end_time: end,
+            };
+
+            promises.push(
+                fetch('/call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(call),
+                })
+            );
+        }
+        const endTime = performance.now();
+        const elapsed = endTime - startTime;
+        document.getElementById('callTimeTaken').innerText =
+            `Time to process: ${elapsed.toFixed()} ms`;
+
+    } catch (err) {
+        console.error('Error generating calls: ', err);
+    }
+}
+
+async function simulate() {
+    try {
+        const planCount = parseInt(document.getElementById('planCount').value);
+        await generatePlans(planCount);
+        console.log(`${planCount} Plans generated successfully.`);
+
+        const customerCount = parseInt(document.getElementById('customerCount').value);
+        await generateCustomers(customerCount);
+        console.log(`${customerCount} Customers generated successfully.`);
+
+        const callCount = parseInt(document.getElementById('callCount').value);
+        await generateCalls(callCount);
+        console.log(`${callCount} Calls generated successfully.`);
+
+        alert("Simulation completed successfully!");
+    } catch (err) {
+        console.error('Error running simulation: ', err);
+        alert("An error occurred during the simulation.");
+    }
 }
