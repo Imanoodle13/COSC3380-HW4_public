@@ -16,7 +16,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION calculate_call_cost(elapsed INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
 -- For use by calculate_total_cost(INT,INT) function.
--- Calculates the cost of a call based on the customer's selected plan.
+-- Calculates the cost of a call based off of the customer's selected plan.
 /*
 If		(elapsed < c_limit):
 	call_cost = elapsed * c_rate;
@@ -41,7 +41,7 @@ $$ LANGUAGE plpgsql;
 -- Create calculate_usage_cost(INT)
 CREATE FUNCTION calculate_usage_cost(used INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
 -- For use by calculate_total_cost(INT,INT) function.
--- Calculates the usage based on the customer's selected plan.
+-- Calculates the usage based off of the customer's selected plan.
 /*
 If		(usage < u_limit):
 	usage_cost = usage * u_rate;
@@ -99,14 +99,14 @@ CREATE TABLE PLAN_OPTION(
 
 /* LV2 */
 CREATE TABLE PLAN(
-	ID			INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	ID			INT,	CONSTRAINT PLAN_pk 			PRIMARY KEY (ID),	CONSTRAINT PLAN_uq UNIQUE (ID),
 	Option		INT,	CONSTRAINT PLAN_OPTION_fk	FOREIGN KEY (Option) REFERENCES PLAN_OPTION(Option),
 	Signup_date	DATE
 );
 
 /* LV3 */
 CREATE TABLE CUSTOMER(
-	Phone		VARCHAR(14),	CONSTRAINT CUSTOMER_pk	PRIMARY KEY (Phone),	CONSTRAINT CUSTOMER_uq UNIQUE (Phone),
+	Phone		VARCHAR(12),	CONSTRAINT CUSTOMER_pk	PRIMARY KEY (Phone),	CONSTRAINT CUSTOMER_uq UNIQUE (Phone),
 	First_name	VARCHAR(100),
 	Last_name	VARCHAR(100),
 	Dob			DATE,
@@ -149,3 +149,9 @@ CREATE TABLE PAYMENT_HIST(
 	Date_rec	DATE,			CONSTRAINT PAYMENT_HIST_composite_pk	PRIMARY KEY (Card_id,Date_rec),
 	Amount		DECIMAL(15,2)
 );
+
+---------- PLAN OPTION ------------------------------------------
+INSERT INTO PLAN_OPTION VALUES
+	(1,0.50,0.55,180,0.50,0.55,5),
+	(2,0.55,0.75,150,0.25,0.30,10),
+	(3,0.25,0.30,200,0.55,0.75,3);
