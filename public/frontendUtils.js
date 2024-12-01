@@ -137,6 +137,25 @@ async function getCalls() {
     }
 }
 
+async function getUsage() {
+    try {
+        const response = await fetch('/usage');
+        const usage_data = await response.json();
+
+        const usageTable = document.getElementById('usageTable');
+        usageTable.innerHTML = '';
+
+        usage_data.forEach(usage => {
+            const row = usageTable.insertRow();
+            row.insertCell(0).textContent = usage.phone;
+            row.insertCell(1).textContent = usage.date_rec;
+            row.insertCell(2).textContent = usage.used;
+        });
+    } catch (err) {
+        console.error('Error populating calls table: ', err);
+    }
+}
+
 async function addCard() {
 
 }
@@ -167,7 +186,7 @@ function normal_random(mean=0, sd=1) {
     return z * sd + mean;
 }
 
-// Functions for generating random customers and plans
+// Functions for generating random customers, plans, calls, and usage
 
 async function randomPhoneNumber() {
     // const country_code = randomInt(1, 9); Add later if doing international calls
@@ -220,6 +239,7 @@ async function generatePlans() {
         return null;
     }
 
+    let new_plan;
     try {
         for (let i = 0; i < count; i++) {
             const option = plan_options[randomInt(0, plan_options.length - 1)].option;
@@ -229,7 +249,7 @@ async function generatePlans() {
             const address = randomAddress();
             const enrollment_date = randomDate(new Date(2000, 0, 1), new Date()); //Assume company has been in business since 2000
 
-            const new_plan = {
+            new_plan = {
                 option,
                 phone,
                 first_name: firstName,
@@ -259,6 +279,7 @@ async function generatePlans() {
 
     } catch (err) {
         console.log('Error adding plan in batch: ', err);
+        console.log(new_plan);
     }
 }
 
@@ -356,7 +377,7 @@ async function generateCalls() {
                 duration = 30 * 1000; // If invalid duration, set to 30 seconds
             }
             const end = new Date(start.getTime() + duration)
-        const call = {
+            const call = {
                 phone: number,
                 start_time: start,
                 end_time: end,
