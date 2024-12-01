@@ -5,33 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="frontendUtils.js"></script>
     <link rel="stylesheet" href="/styles.css">
-
-
 </head>
+
 <body>
+
     <div class="container">
         <!-- Table Section -->
-       <div class="button-container">
+       <div class="button-container" style="margin-bottom: 20px">
            <button onclick="window.location.href='tableView.html'">View Database Tables</button>
        </div>
         <!-- Random Generation -->
        <div>
            <label for="planCount">Number of plans to generate with initial customer:</label>
-           <input type="number" id="planCount" min="1" value="5">
-           <button onclick="generatePlans()">Generate Plans</button>
+           <input type="number" id="planCount" min="1" value="10">
        </div>
         <p id="planTimeTaken"></p>
        <div>
            <label for="customerCount">Number of customers to generate for existing plans:</label>
-           <input type="number" id="customerCount" min="1" value="10">
-           <button onclick="generateCustomers()">Generate Customers</button>
+           <input type="number" id="customerCount" min="1" value="20">
        </div>
         <p id="customerTimeTaken"></p>
-
        <div>
            <label for="callCount">Number of calls to generate:</label>
-           <input type="number" id="callCount" min="1" value="20">
-           <button onclick="generateCalls()">Generate Calls</button>
+           <input type="number" id="callCount" min="1" value="50">
+       </div>
+        <p id="callTimeTaken"></p>
+       <div>
+           <button onclick="simulate()">SIMULATE</button>
        </div>
 
         <!-- Form Section -->

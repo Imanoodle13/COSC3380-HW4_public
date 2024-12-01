@@ -28,7 +28,7 @@ app.get('/styles.css', (req, res) => {
     res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
-// Fetch data from PostgreSQL
+// Fetch customers from database
 app.get('/customer', async (req, res) => {
     console.log("Received GET customer request");
     try {
@@ -45,8 +45,11 @@ app.post('/customer', async (req, res) => {
     console.log("POST Received: ", req.body);
     const client = await pool.connect();
 
-    const today = new Date();
-    const { phone, first_name, last_name, dob, address, plan_id } = req.body;
+    let { phone, first_name, last_name, dob, address, plan_id, enroll_date } = req.body;
+    if (!enroll_date) { // if req does not include enrollment date, set it to right now
+        enroll_date = new Date();
+    }
+
     try {
         await client.query('BEGIN');
         // Check if the entered plan exists:
@@ -57,7 +60,7 @@ app.post('/customer', async (req, res) => {
 
         await client.query(
             'INSERT INTO customer (phone, first_name, last_name, dob, address, plan_id, enroll_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [phone, first_name, last_name, dob, address, plan_id, today]
+            [phone, first_name, last_name, dob, address, plan_id, enroll_date]
         );
 
         await client.query('COMMIT');
@@ -100,7 +103,6 @@ app.get('/PlanOptions', async (req, res) => {
 //Get Plans
 app.get('/plan', async (req, res) => {
    console.log('Get Plans request received: ', req.body);
-   const { id, option, signup_date } = req.body;
    try {
        const plans = await pool.query('SELECT * FROM PLAN');
        res.json(plans.rows)
@@ -133,12 +135,48 @@ app.post('/customer-plan', async (req, res) => {
         await client.query('COMMIT');
         res.sendStatus(201); //Success
     } catch (err) {
-        await client.query('ROLLBACK')
+        await client.query('ROLLBACK');
         console.error(err.message);
         res.sendStatus(500);
     } finally {
         client.release();
     }
+});
+
+app.get('/call', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM call');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error while fetching calls: ', err);
+    }
+});
+
+app.post('/call', async (req, res) => {
+   console.log('Call POST received: ', req.body);
+   let { phone, start_time, end_time } = req.body;
+    start_time = new Date(start_time).toISOString();
+    end_time = new Date(end_time).toISOString();
+
+   const client = await pool.connect();
+
+   try {
+       await client.query('BEGIN');
+
+       const result = await client.query(
+           'INSERT INTO call (Phone, Start_time, End_time) VALUES ($1, $2, $3)',
+           [phone, start_time, end_time]
+       );
+
+       await client.query('COMMIT');
+       res.sendStatus(201); //Success
+   } catch (err) {
+       await client.query('ROLLBACK');
+       console.error(err.message);
+       res.sendStatus(500);
+   } finally {
+       client.release();
+   }
 });
 
 // Start the server
