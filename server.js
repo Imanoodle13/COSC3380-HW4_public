@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
-const { normal_random } = require('./utils')
+const { generateUsage } = require('./utils')
 
 const app = express();
 app.use(bodyParser.json());
@@ -62,6 +62,8 @@ app.post('/customer', async (req, res) => {
             'INSERT INTO customer (phone, first_name, last_name, dob, address, plan_id, enroll_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
             [phone, first_name, last_name, dob, address, plan_id, enroll_date]
         );
+
+        await generateUsage(client, phone, enroll_date);
 
         await client.query('COMMIT');
         res.sendStatus(201); // Success
@@ -132,6 +134,8 @@ app.post('/customer-plan', async (req, res) => {
             [phone, first_name, last_name, dob, address, planID, enroll_date]
         );
 
+        await generateUsage(client, phone, enroll_date);
+
         await client.query('COMMIT');
         res.sendStatus(201); //Success
     } catch (err) {
@@ -177,6 +181,15 @@ app.post('/call', async (req, res) => {
    } finally {
        client.release();
    }
+});
+
+app.get('/usage', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM usage');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching usage data: ', err);
+    }
 });
 
 // Start the server

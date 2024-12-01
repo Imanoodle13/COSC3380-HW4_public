@@ -138,11 +138,9 @@
           <table>
               <thead>
                   <tr>
-                      <th>ID</th>
-                      <th>Call ID</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
-                      <th>Elapsed</th>
+                      <th>Phone Number</th>
+                      <th>Date</th>
+                      <th>Usage</th>
                   </tr>
               </thead>
               <tbody id="usageTable"></tbody>
@@ -158,6 +156,7 @@
             getPlanOptions();
             getPlan();
             getCalls();
+            getUsage();
 
             setInterval(getCustomers, 60000) // refresh every minute
         });
