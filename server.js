@@ -153,6 +153,7 @@ app.get('/call', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error while fetching calls: ', err);
+        res.sendStatus(500);
     }
 });
 
@@ -189,47 +190,113 @@ app.get('/usage', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching usage data: ', err);
+        res.sendStatus(500);
     }
 });
 
 // post to create empty bills that don't exist yet
 app.post('/bill', async (req, res) => {
-   console.log('Create bill request received');
+   //console.log('Create bill request received');
    const client = await pool.connect();
 
-   await client.query('BEGIN');
-
    try {
+       await client.query('BEGIN');
        // get all plans without a bill already created
        const result = await client.query(`
             SELECT a.ID, a.Signup_date
-            FROM plan as a
-            LEFT OUTER JOIN bill as b ON a.ID = b.Plan_ID
-            WHERE b.Plan_ID is null`);
-
+            FROM plan AS a
+            WHERE ID not in (SELECT DISTINCT Plan_ID FROM bill)`);
        for (let row of result.rows) {
            const plan_id = row.id;
            let start_date = new Date(row.signup_date);
+
            while(start_date <= new Date()) {
                await client.query('INSERT INTO bill (Plan_ID, Start_date) VALUES ($1, $2)',
                     [plan_id, start_date.toISOString().split('T')[0]]
                );
                await client.query('UPDATE bill SET End_date = Start_date + INTERVAL \'1 month\'  WHERE Plan_ID = $1 AND Start_date = $2', [plan_id, start_date.toISOString().split('T')[0]]);
 
-               new Date(start_date).setMonth(start_date.getMonth() + 1);
+               start_date.setMonth(start_date.getMonth() + 1);
            }
        }
        await client.query('COMMIT')
    } catch (err) {
        await client.query('ROLLBACK');
        console.error('Error creating bills: ', err);
+       res.sendStatus(500);
    } finally {
        client.release();
    }
+   res.status(200).send('Bills created successfully');
 });
 
 app.put('/bill', async (req, res) => {
-   //fill in bill updating logic here
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        //sum call duration per plan per month
+        const call_query = `
+            SELECT 
+                p.ID AS Plan_ID,
+                EXTRACT(MONTH FROM cl.Start_time) AS month_of_calls,
+                po.C_rate,
+                po.C_over_rate,
+                po.C_limit,
+                SUM(EXTRACT(EPOCH FROM (cl.End_time - cl.Start_time))) / 60 AS call_duration  
+            FROM 
+                PLAN AS p
+            JOIN 
+                PLAN_OPTION AS po ON p.Option = po.Option
+            JOIN 
+                CUSTOMER AS c ON c.Plan_ID = p.ID
+            LEFT OUTER JOIN 
+                CALL AS cl ON cl.Phone = c.Phone
+            WHERE cl.Billed = false 
+            GROUP BY p.ID, EXTRACT(MONTH FROM cl.Start_time),
+                    po.C_rate,
+                    po.C_over_rate,
+                    po.C_limit
+        `;
+        const call_durations = await client.query(call_query);
+        await client.query('UPDATE call SET billed = true WHERE billed = false');
+
+        //sum usage per plan per month
+        const usage_query = `
+            SELECT 
+                p.ID AS Plan_ID,
+                EXTRACT(MONTH FROM u.Date_rec) AS month_of_usage,
+                po.U_rate,
+                po.U_over_rate,
+                po.U_limit,
+                SUM(u.Used) AS usage 
+            FROM 
+                PLAN AS p
+            JOIN 
+                PLAN_OPTION AS po ON p.Option = po.Option
+            JOIN 
+                CUSTOMER AS c ON c.Plan_ID = p.ID
+            LEFT OUTER JOIN 
+                USAGE AS u ON u.Phone = c.Phone
+            WHERE u.Billed = false 
+            GROUP BY p.ID, EXTRACT(MONTH FROM u.Date_rec),
+                    po.U_rate,
+                    po.U_over_rate,
+                    po.U_limit
+        `;
+        const usage_amounts = await client.query(usage_query)
+        await client.query('UPDATE usage SET billed = true WHERE billed = false');
+
+        await client.query('COMMIT');
+        res.status(200).send('Bill successfully calculated')
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error updating billing tables: ', err);
+        res.sendStatus(500);
+    } finally {
+        client.release();
+    }
 });
 
 // Start the server

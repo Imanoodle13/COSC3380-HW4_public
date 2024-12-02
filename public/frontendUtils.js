@@ -427,16 +427,24 @@ async function simulate() {
 async function updateBills() {
     const startTime = performance.now();
 
-    await fetch('/bill', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+    // Create empty billing rows for plans without any bills
+    try {
+        await fetch('/bill', {
+            method: 'POST',
+        });
+
+        await fetch('/bill', {
+            method: 'PUT',
+        });
+        alert('Bills updated Successfully')
+    } catch (err) {
+        console.error('Error updating Bills', err);
+        alert('Error Updating Bills');
+    }
+
     console.log('After update request');
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =
             `Time to process: ${elapsed.toFixed()} ms`;
-    alert('Bills updated Successfully')
 }
