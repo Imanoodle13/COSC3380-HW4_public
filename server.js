@@ -30,7 +30,7 @@ app.get('/styles.css', (req, res) => {
 
 // Fetch customers from database
 app.get('/customer', async (req, res) => {
-    console.log("Received GET customer request");
+    //console.log("Received GET customer request");
     try {
         const result = await pool.query('SELECT * FROM customer');
         res.json(result.rows);
@@ -42,7 +42,7 @@ app.get('/customer', async (req, res) => {
 
 // Add a customer
 app.post('/customer', async (req, res) => {
-    console.log("POST Received: ", req.body);
+    //console.log("POST Received: ", req.body);
     const client = await pool.connect();
 
     let { phone, first_name, last_name, dob, address, plan_id, enroll_date } = req.body;
@@ -104,7 +104,7 @@ app.get('/PlanOptions', async (req, res) => {
 
 //Get Plans
 app.get('/plan', async (req, res) => {
-   console.log('Get Plans request received: ', req.body);
+   //console.log('Get Plans request received: ', req.body);
    try {
        const plans = await pool.query('SELECT * FROM PLAN');
        res.json(plans.rows)
@@ -115,7 +115,7 @@ app.get('/plan', async (req, res) => {
 
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {
-    console.log('Plan Option POST received: ', req.body);
+    //console.log('Plan Option POST received: ', req.body);
     const { option, phone, first_name, last_name, dob, address, enroll_date } = req.body;
 
     const client = await pool.connect();
@@ -157,7 +157,7 @@ app.get('/call', async (req, res) => {
 });
 
 app.post('/call', async (req, res) => {
-   console.log('Call POST received: ', req.body);
+   //console.log('Call POST received: ', req.body);
    let { phone, start_time, end_time } = req.body;
     start_time = new Date(start_time).toISOString();
     end_time = new Date(end_time).toISOString();
@@ -190,6 +190,46 @@ app.get('/usage', async (req, res) => {
     } catch (err) {
         console.error('Error fetching usage data: ', err);
     }
+});
+
+// post to create empty bills that don't exist yet
+app.post('/bill', async (req, res) => {
+   console.log('Create bill request received');
+   const client = await pool.connect();
+
+   await client.query('BEGIN');
+
+   try {
+       // get all plans without a bill already created
+       const result = await client.query(`
+            SELECT a.ID, a.Signup_date
+            FROM plan as a
+            LEFT OUTER JOIN bill as b ON a.ID = b.Plan_ID
+            WHERE b.Plan_ID is null`);
+
+       for (let row of result.rows) {
+           const plan_id = row.id;
+           let start_date = new Date(row.signup_date);
+           while(start_date <= new Date()) {
+               await client.query('INSERT INTO bill (Plan_ID, Start_date) VALUES ($1, $2)',
+                    [plan_id, start_date.toISOString().split('T')[0]]
+               );
+               await client.query('UPDATE bill SET End_date = Start_date + INTERVAL \'1 month\'  WHERE Plan_ID = $1 AND Start_date = $2', [plan_id, start_date.toISOString().split('T')[0]]);
+
+               new Date(start_date).setMonth(start_date.getMonth() + 1);
+           }
+       }
+       await client.query('COMMIT')
+   } catch (err) {
+       await client.query('ROLLBACK');
+       console.error('Error creating bills: ', err);
+   } finally {
+       client.release();
+   }
+});
+
+app.put('/bill', async (req, res) => {
+   //fill in bill updating logic here
 });
 
 // Start the server

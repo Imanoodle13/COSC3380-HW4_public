@@ -239,15 +239,15 @@ async function generatePlans() {
         return null;
     }
 
-    let new_plan;
+    let new_plan; // declare outside to print in error statement to debug
     try {
         for (let i = 0; i < count; i++) {
             const option = plan_options[randomInt(0, plan_options.length - 1)].option;
             const phone = await randomPhoneNumber();
             const {firstName, lastName} = randomNames();
-            const dob = randomDate(new Date(1950, 0, 1), new Date(2006, 11, 31))
+            const dob = randomDate(new Date(1950, 0, 1), new Date(2008, 11, 31))
             const address = randomAddress();
-            const enrollment_date = randomDate(new Date(2000, 0, 1), new Date()); //Assume company has been in business since 2000
+            const enrollment_date = randomDate(new Date(2019, 0, 1), new Date()); //Assume company has been in business since 2019
 
             new_plan = {
                 option,
@@ -422,4 +422,21 @@ async function simulate() {
         console.error('Error running simulation: ', err);
         alert("An error occurred during the simulation.");
     }
+}
+
+async function updateBills() {
+    const startTime = performance.now();
+
+    await fetch('/bill', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+    console.log('After update request');
+    const endTime = performance.now();
+    const elapsed = endTime - startTime;
+    document.getElementById('billUpdateTimeTaken').innerText =
+            `Time to process: ${elapsed.toFixed()} ms`;
+    alert('Bills updated Successfully')
 }
