@@ -71,9 +71,10 @@ CREATE FUNCTION calculate_total_cost(elapsed INT, used INT, plan_id INT) RETURNS
 -- For use by BILL relation for attribute BILL.cost.
 -- Calculates the cost of the call and usage.
 	DECLARE
+		tax_rate	DECIMAL(5,2)	:= 0.0925;
 		call_cost	DECIMAL(15,2)	:= calculate_call_cost(elapsed,plan_id);
 		usage_cost	DECIMAL(15,2)	:= calculate_usage_cost(used,plan_id);
-		total_cost	DECIMAL(15,2)	:= call_cost + usage_cost;
+		total_cost	DECIMAL(15,2)	:= (call_cost + usage_cost) + ((call_cost + usage_cost) * tax_rate);
 	BEGIN
 		RETURN total_cost;
 	END;
@@ -119,12 +120,12 @@ CREATE TABLE CUSTOMER(
 );
 
 CREATE TABLE BILL(
-	Plan_ID		INT,			CONSTRAINT PLAN_fk				FOREIGN KEY (Plan_ID) REFERENCES PLAN(ID),
-	Start_date	DATE,			CONSTRAINT BILL_composite_pk	PRIMARY KEY (Plan_ID,Start_date),
-	End_date	DATE, /* Violates 2NF but is very useful for bill calculation purposes */
-	Total		DECIMAL(15,2) DEFAULT 0,
-	Payment		DECIMAL(15,2) DEFAULT 0,
-	remaining_balance		DECIMAL(15, 2) DEFAULT 0
+	Plan_ID				INT,			CONSTRAINT PLAN_fk				FOREIGN KEY (Plan_ID) REFERENCES PLAN(ID),
+	Start_date			DATE,			CONSTRAINT BILL_composite_pk	PRIMARY KEY (Plan_ID,Start_date),
+	End_date			DATE, /* Violates 2NF but is very useful for bill calculation purposes */
+	Total				DECIMAL(15,2) DEFAULT 0,
+	Payment				DECIMAL(15,2) DEFAULT 0,
+	remaining_balance	DECIMAL(15, 2) DEFAULT 0
 );
 
 /* LV4 */
@@ -157,6 +158,6 @@ CREATE TABLE PAYMENT_HIST(
 
 ---------- PLAN OPTION ------------------------------------------
 INSERT INTO PLAN_OPTION VALUES
-	(1,0.50,0.55,180,0.50,0.55,5),
-	(2,0.55,0.75,150,0.25,0.30,10),
-	(3,0.25,0.30,200,0.55,0.75,3);
+	(1,0.50,0.55,180,0.50,0.55,254),
+	(2,0.55,0.75,150,0.25,0.30,508),
+	(3,0.25,0.30,200,0.55,0.75,152);
