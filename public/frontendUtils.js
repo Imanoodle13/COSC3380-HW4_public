@@ -71,6 +71,126 @@ async function getPlanOptions() {
     }
 }
 
+/////     /////     /////     /////     /////     /////     /////     /////     /////     
+//List Plan Options and Plan Count for each
+async function getPopularPlans() {
+    try {
+        const response = await fetch('/PopularPlans');
+        if (!response.ok) {
+            throw new Error(`Error fetching popular plans: ${response.statusText}`);
+        }
+
+        const popularPlans = await response.json();
+        console.log('Received Popular Plans: ', popularPlans);
+
+        const popularPlansTable = document.getElementById('popularPlansTable');
+        popularPlansTable.innerHTML = '';
+
+        popularPlans.forEach(plan => {
+            const row = popularPlansTable.insertRow();
+            row.insertCell(0).textContent = plan["Plan Option"];
+            row.insertCell(1).textContent = plan["Plan Count"];
+        });
+    } catch (err) {
+        console.error('Error fetching popular plans: ', err);
+    }
+}
+
+let callUsageData = [];
+let rowsDisplayed = 0;
+
+async function getCallUsageLimit() {
+    try {
+        const response = await fetch('/limitsReached');
+        if (!response.ok) {
+            throw new Error(`Error fetching limits: ${response.statusText}`);
+        }
+
+        callUsageData = await response.json();
+        rowsDisplayed = 0;
+        toggleRows();
+    } catch (err) {
+        console.error('Error fetching limits: ', err);
+    }
+}
+
+function generateHeaders(tableId, headers) {
+    const table = document.getElementById(tableId);
+    const thead = table.querySelector('thead');
+    thead.innerHTML = '';
+
+    const headerRow = thead.insertRow();
+    headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+    });
+}
+
+function toggleRows() {
+    const callUsageTable = document.getElementById('callUsageTable').querySelector('tbody');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    callUsageTable.innerHTML = ''; // Clear the table body
+
+    if (rowsDisplayed === 0) {
+        const headers = [
+            'Phone',
+            'Plan Option',
+            'Elapsed',
+            'CALL LIMIT REACHED',
+            'Data Used',
+            'USAGE LIMIT REACHED'
+        ];
+        generateHeaders('callUsageTable', headers);
+
+        const rowsToShow = Math.min(10, callUsageData.length);
+        for (let i = 0; i < rowsToShow; i++) {
+            const row = callUsageTable.insertRow();
+            row.insertCell(0).textContent = callUsageData[i]["Phone"];
+            row.insertCell(1).textContent = callUsageData[i]["Plan Option"];
+            row.insertCell(2).textContent = callUsageData[i]["Elapsed"];
+            row.insertCell(3).textContent = callUsageData[i]["CALL LIMIT REACHED"];
+            row.insertCell(4).textContent = callUsageData[i]["Data Used"];
+            row.insertCell(5).textContent = callUsageData[i]["USAGE LIMIT REACHED"];
+        }
+        rowsDisplayed = rowsToShow;
+
+        // Load more
+        if (rowsDisplayed < callUsageData.length) {
+            loadMoreContainer.style.display = 'block';
+        }
+    } else {
+        rowsDisplayed = 0;
+        const thead = document.getElementById('callUsageTable').querySelector('thead');
+        thead.innerHTML = '';
+        loadMoreContainer.style.display = 'none';
+    }
+}
+
+function loadMoreRows() {
+    const callUsageTable = document.getElementById('callUsageTable').querySelector('tbody');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+    const rowsToAdd = Math.min(10, callUsageData.length - rowsDisplayed);
+    for (let i = rowsDisplayed; i < rowsDisplayed + rowsToAdd; i++) {
+        const row = callUsageTable.insertRow();
+        row.insertCell(0).textContent = callUsageData[i]["Phone"];
+        row.insertCell(1).textContent = callUsageData[i]["Plan Option"];
+        row.insertCell(2).textContent = callUsageData[i]["Elapsed"];
+        row.insertCell(3).textContent = callUsageData[i]["CALL LIMIT REACHED"];
+        row.insertCell(4).textContent = callUsageData[i]["Data Used"];
+        row.insertCell(5).textContent = callUsageData[i]["USAGE LIMIT REACHED"];
+    }
+    rowsDisplayed += rowsToAdd;
+
+    // Hide "Load More Rows" button if all rows are displayed
+    if (rowsDisplayed >= callUsageData.length) {
+        loadMoreContainer.style.display = 'none';
+    }
+}
+
+/////     /////     /////     /////     /////     /////     /////     /////     /////     
+
 //Get Plans
 async function getPlan() {
     try {
@@ -406,14 +526,17 @@ async function generateCalls() {
 async function simulate() {
     try {
         const planCount = parseInt(document.getElementById('planCount').value);
+        console.log('Generating plans:', planCount);
         await generatePlans(planCount);
         console.log(`${planCount} Plans generated successfully.`);
 
         const customerCount = parseInt(document.getElementById('customerCount').value);
+        console.log('Generating customers:', customerCount);
         await generateCustomers(customerCount);
         console.log(`${customerCount} Customers generated successfully.`);
 
         const callCount = parseInt(document.getElementById('callCount').value);
+        console.log('Generating calls:', callCount);
         await generateCalls(callCount);
         console.log(`${callCount} Calls generated successfully.`);
 
