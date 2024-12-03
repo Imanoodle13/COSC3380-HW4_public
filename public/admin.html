@@ -136,6 +136,35 @@
                 </div>
             </div>
         </div>
+        <div class="generalTables">
+            <h2>General Tables</h2>
+            <div>
+                <!-- Call/Usage Limit -->
+                <h3>Call/Usage Limit By Phone</h3>
+                <button onclick="toggleRows()">Toggle Table</button>
+                <table id="callUsageTable">
+                    <thead>
+                        <tr>
+                            <th>Phone</th>
+                            <th>Plan Option</th>
+                            <th>Elapsed</th>
+                            <th>CALL LIMIT REACHED</th>
+                            <th>Data Used</th>
+                            <th>USAGE LIMIT REACHED</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="loadMoreContainer" style="display: none;">
+                    <button onclick="loadMoreRows()">Load More Rows</button>
+                </div>
+            </div>
+        </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            getCallUsageLimit();
+        });
+    </script>
 </body>
 </html>
