@@ -156,6 +156,12 @@ CREATE TABLE PAYMENT_HIST(
 	Amount		DECIMAL(15,2)
 );
 
+-- Indexes
+CREATE INDEX idx_call_phone ON CALL(Phone);
+CREATE INDEX idx_usage_phone ON USAGE(Phone);
+CREATE INDEX idx_bill_plan_id ON BILL(Plan_ID);
+CREATE INDEX idx_payment_hist_card_id ON PAYMENT_HIST(Card_id);
+
 ---------- PLAN OPTION ------------------------------------------
 INSERT INTO PLAN_OPTION VALUES
 	(1,0.50,0.55,180,0.50,0.55,254),
