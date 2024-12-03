@@ -58,10 +58,25 @@
         <button onclick="createPlan()">Create Plan</button>
     </div>
 
-    <!--Load plan options on startup-->
+    <!-- Popular Plans -->
+    <div>
+        <h2>Popular Plans</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody id="popularPlansTable"></tbody>
+        </table>
+    </div>
+    
+    <!--Load on startup-->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
            getPlanOptions();
+           getPopularPlans();
         });
     </script>
 </body>
