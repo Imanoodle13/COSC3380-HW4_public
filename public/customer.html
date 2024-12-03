@@ -29,7 +29,7 @@
     </div>
 
     <!-- Forms -->
-    <div class="form-container">
+    <div class="form-container" style="margin-bottom: 30px">
         <h3>New Plan</h3>
         <div class="form-group">
             <label for="planOption">Plan Option</label>
@@ -58,8 +58,41 @@
         <button onclick="createPlan()">Create Plan</button>
     </div>
 
+    <!-- Cards -->
+    <div class="form-container" style="margin-bottom: 30px">
+        <div>
+            <h3>Add Card</h3>
+            <div class="form-group">
+                <label for="cardCust">Customer Phone Number</label>
+                <input type="text" id="cardCust" placeholder="Select Customer ID">
+            </div>
+        </div>
+        <button onclick="addCard()">Add Card</button>
+    </div>
+
+    <div class="form-container" style="margin-bottom: 30px">
+        <h3>Make Payment on unpaid bill</h3>
+        <div class="form-group">
+            <label for="planID">Plan ID</label>
+            <input type="number" id="planID" min="1" placeholder="Select your plan">
+        </div>
+        <div class="form-group">
+            <label for="startDate">Bill Start Date</label>
+            <input type="date" id="startDate" placeholder="Select starting date of bill to pay">
+        </div>
+        <div class="form-group">
+            <label for="cardID">Card</label>
+            <input type="number" id="cardID" min="1" placeholder="Enter your card information (ID)">
+        </div>
+        <div class="form-group">
+            <label for="paymentAmount">Payment Amount</label>
+            <input type="number" id="paymentAmount" step="0.01" min="0" placeholder="Enter a payment amount">
+        </div>
+        <button onclick="makePayment()">Make Payment</button>
+    </div>
+
     <!-- Popular Plans -->
-    <div>
+    <div style="margin-bottom: 30px">
         <h2>Popular Plans</h2>
         <table>
             <thead>
@@ -71,7 +104,7 @@
             <tbody id="popularPlansTable"></tbody>
         </table>
     </div>
-    
+
     <!--Load on startup-->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
