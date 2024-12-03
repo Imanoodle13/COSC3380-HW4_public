@@ -12,12 +12,13 @@ app.use(cors()); // Enable CORS for cross-origin requests
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Changed
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'cell_phone_company_db',
     password: 'group16!',
-    port: 5433,
+    port: 5433
 });
 
 app.get('/', (req, res) => {
@@ -113,6 +114,52 @@ app.get('/plan', async (req, res) => {
    }
 });
 
+/////     /////     /////     /////     /////     /////     /////     /////     /////     
+// Get Popular Plans
+app.get('/PopularPlans', async (req, res) => {
+    try {
+        const query = `
+            SELECT
+                PLAN_OPTION.Option AS "Plan Option",
+                COUNT(PLAN.ID) AS "Plan Count"
+            FROM PLAN_OPTION
+            JOIN PLAN ON PLAN_OPTION.Option = PLAN.Option
+            GROUP BY PLAN_OPTION.Option
+            ORDER BY "Plan Count" DESC;
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching popular plans: ', err);
+        res.status(500).send('Error fetching popular plans');
+    }
+});
+
+app.get('/limitsReached', async (req, res) => {
+    try {
+        const query =`
+            SELECT
+                CUSTOMER.phone													AS "Phone",
+                PLAN_OPTION.option												AS "Plan Option",
+                calculate_elapsed(start_time,end_time)							AS "Elapsed",
+                calculate_elapsed(start_time,end_time) > PLAN_OPTION.c_limit	AS "CALL LIMIT REACHED",
+                USAGE.used														AS "Data Used",
+                USAGE.used > PLAN_OPTION.u_limit								AS "USAGE LIMIT REACHED"
+            FROM PLAN
+            JOIN CUSTOMER		ON PLAN.ID = CUSTOMER.Plan_ID
+            JOIN PLAN_OPTION	ON PLAN.Option = PLAN_OPTION.option
+            JOIN CALL			ON CUSTOMER.Phone = CALL.Phone
+            JOIN USAGE			ON CUSTOMER.Phone = USAGE.Phone
+            ORDER BY "Phone" DESC;
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching limits: ', err);
+        res.status(500).send('Error fetching limits');
+    }
+});
+/////     /////     /////     /////     /////     /////     /////     /////     /////     
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {
     //console.log('Plan Option POST received: ', req.body);
@@ -153,7 +200,6 @@ app.get('/call', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error while fetching calls: ', err);
-        res.sendStatus(500);
     }
 });
 
@@ -190,44 +236,43 @@ app.get('/usage', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching usage data: ', err);
-        res.sendStatus(500);
     }
 });
 
 // post to create empty bills that don't exist yet
 app.post('/bill', async (req, res) => {
-   //console.log('Create bill request received');
+   console.log('Create bill request received');
    const client = await pool.connect();
 
+   await client.query('BEGIN');
+
    try {
-       await client.query('BEGIN');
        // get all plans without a bill already created
        const result = await client.query(`
             SELECT a.ID, a.Signup_date
-            FROM plan AS a
-            WHERE ID not in (SELECT DISTINCT Plan_ID FROM bill)`);
+            FROM plan as a
+            LEFT OUTER JOIN bill as b ON a.ID = b.Plan_ID
+            WHERE b.Plan_ID is null`);
+
        for (let row of result.rows) {
            const plan_id = row.id;
            let start_date = new Date(row.signup_date);
-
            while(start_date <= new Date()) {
                await client.query('INSERT INTO bill (Plan_ID, Start_date) VALUES ($1, $2)',
                     [plan_id, start_date.toISOString().split('T')[0]]
                );
                await client.query('UPDATE bill SET End_date = Start_date + INTERVAL \'1 month\'  WHERE Plan_ID = $1 AND Start_date = $2', [plan_id, start_date.toISOString().split('T')[0]]);
 
-               start_date.setMonth(start_date.getMonth() + 1);
+               new Date(start_date).setMonth(start_date.getMonth() + 1);
            }
        }
        await client.query('COMMIT')
    } catch (err) {
        await client.query('ROLLBACK');
        console.error('Error creating bills: ', err);
-       res.sendStatus(500);
    } finally {
        client.release();
    }
-   res.status(200).send('Bills created successfully');
 });
 
 app.put('/bill', async (req, res) => {
@@ -364,4 +409,3 @@ app.put('/bill', async (req, res) => {
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
-
