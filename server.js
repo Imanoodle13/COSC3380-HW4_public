@@ -238,55 +238,116 @@ app.put('/bill', async (req, res) => {
 
         //sum call duration per plan per month
         const call_query = `
-            SELECT 
-                p.ID AS Plan_ID,
-                EXTRACT(MONTH FROM cl.Start_time) AS month_of_calls,
-                po.C_rate,
-                po.C_over_rate,
-                po.C_limit,
-                SUM(EXTRACT(EPOCH FROM (cl.End_time - cl.Start_time))) / 60 AS call_duration  
-            FROM 
-                PLAN AS p
-            JOIN 
-                PLAN_OPTION AS po ON p.Option = po.Option
-            JOIN 
-                CUSTOMER AS c ON c.Plan_ID = p.ID
-            LEFT OUTER JOIN 
-                CALL AS cl ON cl.Phone = c.Phone
-            WHERE cl.Billed = false 
-            GROUP BY p.ID, EXTRACT(MONTH FROM cl.Start_time),
+            CREATE TEMPORARY TABLE call_totals AS
+                SELECT 
+                    p.ID AS Plan_ID,
+                    EXTRACT(MONTH FROM cl.Start_time) AS month_of_calls,
                     po.C_rate,
                     po.C_over_rate,
-                    po.C_limit
+                    po.C_limit,
+                    SUM(EXTRACT(EPOCH FROM (cl.End_time::TIMESTAMP - cl.Start_time::TIMESTAMP))) / 60 AS call_duration
+                   
+                
+                    FROM PLAN AS p
+                    
+                JOIN PLAN_OPTION AS po 
+                    ON p.Option = po.Option
+                    
+                JOIN CUSTOMER AS c 
+                    ON c.Plan_ID = p.ID
+                    
+                LEFT OUTER JOIN CALL AS cl 
+                    ON cl.Phone = c.Phone
+                
+                WHERE cl.Billed = false
+                
+                GROUP BY p.ID, EXTRACT(MONTH FROM cl.Start_time),
+                        po.C_rate,
+                        po.C_over_rate,
+                        po.C_limit
         `;
-        const call_durations = await client.query(call_query);
+        await client.query(call_query);
+
         await client.query('UPDATE call SET billed = true WHERE billed = false');
+
+        const cost_calls_query = `
+            CREATE TEMPORARY TABLE cost_of_calls AS
+                SELECT
+                   a.plan_id, 
+                   a.month_of_calls,
+                   CASE
+                        WHEN a.call_duration < a.C_limit then a.call_duration * a.C_rate * 1.08 --tax rate
+                        else ((a.C_limit * a.c_rate) + (a.call_duration - a.C_Limit) * a.C_over_rate) * 1.08
+                   END AS call_cost
+                   
+                   FROM call_totals AS a
+        `;
+        await client.query(cost_calls_query);
 
         //sum usage per plan per month
         const usage_query = `
-            SELECT 
-                p.ID AS Plan_ID,
-                EXTRACT(MONTH FROM u.Date_rec) AS month_of_usage,
-                po.U_rate,
-                po.U_over_rate,
-                po.U_limit,
-                SUM(u.Used) AS usage 
-            FROM 
-                PLAN AS p
-            JOIN 
-                PLAN_OPTION AS po ON p.Option = po.Option
-            JOIN 
-                CUSTOMER AS c ON c.Plan_ID = p.ID
-            LEFT OUTER JOIN 
-                USAGE AS u ON u.Phone = c.Phone
-            WHERE u.Billed = false 
-            GROUP BY p.ID, EXTRACT(MONTH FROM u.Date_rec),
+            CREATE TEMPORARY TABLE usage_totals AS
+                SELECT 
+                    p.ID AS Plan_ID,
+                    EXTRACT(MONTH FROM u.Date_rec) AS month_of_usage,
                     po.U_rate,
                     po.U_over_rate,
-                    po.U_limit
+                    po.U_limit,
+                    SUM(u.Used) AS usage
+                
+                    FROM PLAN AS p
+                
+                JOIN PLAN_OPTION AS po
+                    ON p.Option = po.Option
+                    
+                JOIN CUSTOMER AS c 
+                    ON c.Plan_ID = p.ID
+                    
+                LEFT OUTER JOIN USAGE AS u 
+                    ON u.Phone = c.Phone
+                                       
+                WHERE u.Billed = false 
+                
+                GROUP BY p.ID, EXTRACT(MONTH FROM u.Date_rec),
+                        po.U_rate,
+                        po.U_over_rate,
+                        po.U_limit
         `;
-        const usage_amounts = await client.query(usage_query)
+        await client.query(usage_query);
+
         await client.query('UPDATE usage SET billed = true WHERE billed = false');
+
+        const cost_usage_query = `
+            CREATE TEMPORARY TABLE cost_of_usage AS
+                SELECT 
+                   a.plan_id, 
+                   a.month_of_usage,
+                   CASE
+                        WHEN a.usage < a.U_limit then a.usage * a.U_rate * 1.08
+                        else ((a.U_limit * a.U_rate) + (a.Usage - a.U_limit) * a.U_over_rate) * 1.08
+                   END AS usage_cost
+                   
+                   FROM usage_totals as a
+        `;
+        await client.query(cost_usage_query);
+
+        await client.query(`
+            UPDATE bill 
+            SET 
+                total = total + c.call_cost,
+                remaining_balance = remaining_balance + c.call_cost
+            FROM cost_of_calls as c
+            WHERE bill.plan_id = c.plan_id AND EXTRACT(MONTH FROM bill.start_date) = c.month_of_calls
+        `);
+
+        await client.query(`
+            UPDATE bill 
+            SET 
+                total = total + u.usage_cost,
+                remaining_balance = remaining_balance + u.usage_cost
+            FROM cost_of_usage as u
+            WHERE bill.plan_id = u.plan_id AND EXTRACT(MONTH FROM bill.start_date) = u.month_of_usage
+        `);
 
         await client.query('COMMIT');
         res.status(200).send('Bill successfully calculated')
