@@ -20,12 +20,12 @@ const pool = new Pool({
     password: 'group16!',
     port: 5433
 });
-/*
+
 // http://localhost:3000/index.html
 // http://localhost:3000/admin.html
 // http://localhost:3000/customer.html
 // http://localhost:3000/tableView.html
-const pool = new Pool({
+/*const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'HW4',
@@ -204,7 +204,7 @@ app.get('/limitsReached', async (req, res) => {
     }
 });
 
-/////     /////     /////     /////     /////     /////     /////     /////     /////
+//// //// //// //// //// //// //// ////
 
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {
