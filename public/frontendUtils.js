@@ -149,7 +149,7 @@ async function getHistory() {
     }
 }
 
-/////     /////     /////     /////     /////     /////     /////     /////     /////     
+/////     /////     /////     /////     /////     /////     /////     /////     /////
 //List Plan Options and Plan Count for each
 async function getPopularPlans() {
     try {
@@ -198,7 +198,7 @@ async function getEarningsPerPlan(year = 2024, month = 1) {
 
         earnings.forEach(plan => {
             const row = earningsTable.insertRow();
-            row.insertCell(0).textContent = plan["option"];
+            row.insertCell(0).textContent = plan["Option"];
             row.insertCell(1).textContent = plan["Total Earned"];
         });
     } catch (err) {
@@ -305,7 +305,47 @@ function loadMoreRows() {
     }
 }
 
-/////     /////     /////     /////     /////     /////     /////     /////     /////     
+function formatPhoneNumber(phone) {
+    return phone.replace(/[^0-9]/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '($1)$2-$3');
+}
+
+async function checkBill() {
+    const phone = document.getElementById('searchPhone').value.trim(); // Get the phone number
+
+    const tableBody = document.getElementById('checkBillTable');
+    tableBody.innerHTML = ''; // Clear the table before adding new rows
+
+    try {
+        // Fetch the data from the server
+        const response = await fetch(`/CheckBill?phone=${encodeURIComponent(phone)}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching bill: ${response.statusText}`);
+        }
+
+        const bills = await response.json();
+        console.log('Received Bills: ', bills); // Debugging log
+
+        if (bills.length === 0) {
+            // If no bills are found, show a message in the table
+            const row = tableBody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 2;
+            cell.textContent = 'No records found for this phone number.';
+            cell.style.textAlign = 'center';
+            return;
+        }
+
+        // Loop through the bills and add rows to the table
+        bills.forEach(bill => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = bill["Plan_ID"]; // Use the exact property name from the server response
+            row.insertCell(1).textContent = bill["Total_Owed"]; // Use the exact property name from the server response
+        });
+    } catch (err) {
+        console.error('Error fetching bill:', err);
+    }
+}
+/////     /////     /////     /////     /////     /////     /////     /////     /////
 
 //Get Plans
 async function getPlan() {

@@ -204,7 +204,29 @@ app.get('/limitsReached', async (req, res) => {
     }
 });
 
-//// //// //// //// //// //// //// ////
+app.get('/CheckBill', async (req, res) => {
+    const phone = req.query.phone;
+    console.log('Received phone number:', phone); // Debug log to check input
+
+    try {
+        const query = `
+            SELECT
+                PLAN.ID AS "Plan_ID",
+                COALESCE(SUM(BILL.Total - BILL.Remaining_balance), 0) AS "Total_Owed"
+            FROM PLAN
+            JOIN BILL ON PLAN.ID = BILL.Plan_ID
+            JOIN CUSTOMER ON PLAN.ID = CUSTOMER.Plan_ID
+            WHERE CUSTOMER.Phone = $1
+            GROUP BY CUSTOMER.Phone, PLAN.ID;
+        `;
+        const result = await pool.query(query, [phone]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching bill:', err);
+        res.status(500).send('Error fetching bill');
+    }
+});
+/////     /////     /////     /////     /////     /////     /////     /////     /////
 
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {

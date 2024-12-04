@@ -8,10 +8,10 @@ CREATE FUNCTION calculate_elapsed(time_start TIMESTAMP, time_end TIMESTAMP) RETU
 -- For use by calculate_call_cost(INT) function.
 -- Calculates the elapsed time in minutes.
 	DECLARE
-	    elapsed INT := 0
+	    elapsed INT := 0;
 	BEGIN
 	    IF time_start IS NOT NULL AND time_end IS NOT NULL THEN
-	       elapsed	INT	:= EXTRACT(EPOCH FROM (time_end::TIMESTAMP - time_start::TIMESTAMP)) / 60;
+	       elapsed	:= EXTRACT(EPOCH FROM (time_end::TIMESTAMP - time_start::TIMESTAMP)) / 60;
 	    END IF;
 		RETURN elapsed;
 	END;
@@ -163,9 +163,9 @@ CREATE INDEX idx_payment_hist_card_id ON PAYMENT_HIST(Card_id);
 
 ---------- PLAN OPTION ------------------------------------------
 INSERT INTO PLAN_OPTION VALUES
-	(1,0.50,0.55,180,0.50,0.55,254),
-	(2,0.55,0.75,150,0.25,0.30,508),
-	(3,0.25,0.30,200,0.55,0.75,152);
+	(1,0.05,0.06,23,0.05,0.06,254),
+	(2,0.06,0.08,21,0.03,0.04,508),
+	(3,0.03,0.04,25,0.06,0.08,152);
 
 ----------- INDEXING --------------------------------------------
 DROP INDEX IF EXISTS idx_plan_id;

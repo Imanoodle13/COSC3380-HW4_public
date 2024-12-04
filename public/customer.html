@@ -105,6 +105,26 @@
         </table>
     </div>
 
+    <div>
+        <h2>Check Bill</h2>
+        <div class="form-container" style="margin-bottom: 30px">
+            <div>
+                <label for="searchPhone">Phone Number</label>
+                <input type="text" id="searchPhone" placeholder="(XXX)XXX-XXXX">
+            </div>
+            <button onclick="checkBill()">Search</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Plan ID</th>
+                    <th>Total Owed</th>
+                </tr>
+            </thead>
+            <tbody id="checkBillTable"></tbody>
+        </table>
+    </div>
+
     <!--Load on startup-->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
