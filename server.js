@@ -162,7 +162,7 @@ app.get('/EarningsPerPlan', async (req, res) => {
         const query = `
             SELECT 
                 PLAN_OPTION.Option             AS "Option",
-                COALESCE(SUM(BILL.Payment), 0) AS "Total Earned"
+                COALESCE(SUM(BILL.Total - Bill.remaining_balance), 0) AS "Total Earned"
             FROM PLAN_OPTION
             LEFT JOIN PLAN ON PLAN_OPTION.Option = PLAN.Option
             LEFT JOIN BILL ON 
@@ -298,6 +298,16 @@ app.get('/usage', async (req, res) => {
  * BILLING
  * bills will be generated for every plan
  */
+
+app.get('/billInfo', async (req, res) => {
+   try {
+       const result = await pool.query('SELECT * FROM BILL');
+       res.json(result.rows);
+   } catch (err) {
+       console.error('Error getting bill info: ', err);
+       res.sendStatus(500);
+   }
+});
 
 app.post('/bill', async (req, res) => {
    //console.log('Create bill request received');
@@ -476,6 +486,16 @@ app.put('/bill', async (req, res) => {
  * Every customer will be automatically generated with one card
  */
 
+app.get('/cardInfo', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM CARD');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error getting card info: ', err);
+        res.sendStatus(500);
+    }
+});
+
 app.post('/card', async (req, res) => {
     const client = await pool.connect();
 
@@ -547,6 +567,16 @@ app.put('/card', async (req, res) => {
     } finally {
         client.release();
     }
+});
+
+app.get('/history', async (req, res) => {
+   try {
+       const result = await pool.query('SELECT * FROM PAYMENT_HIST');
+       res.json(result.rows);
+   } catch (err) {
+       console.log('Error getting payment history: ', err);
+       res.sendStatus(500);
+   }
 });
 
 // Start the server

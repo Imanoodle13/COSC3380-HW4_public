@@ -18,17 +18,17 @@
         <!-- Random Generation -->
        <div>
            <label for="planCount">Number of plans to generate with initial customer:</label>
-           <input type="number" id="planCount" min="1" value="10">
+           <input type="number" id="planCount" min="1" value="70">
        </div>
         <p id="planTimeTaken"></p>
        <div>
            <label for="customerCount">Number of customers to generate for existing plans:</label>
-           <input type="number" id="customerCount" min="1" value="20">
+           <input type="number" id="customerCount" min="1" value="200">
        </div>
         <p id="customerTimeTaken"></p>
        <div>
            <label for="callCount">Number of calls to generate:</label>
-           <input type="number" id="callCount" min="1" value="50">
+           <input type="number" id="callCount" min="1" value="2000">
        </div>
         <p id="callTimeTaken"></p>
 
@@ -73,69 +73,6 @@
                     </div>
                     <button onclick="addCustomer()">Add Customer</button>
                 </div>
-
-                <div>
-                    <h3>Add Card</h3>
-                    <div class="form-group">
-                        <label for="cardCust">Customer ID</label>
-                        <input type="number" id="cardCust" placeholder="Select Customer ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="cardID">Card ID</label>
-                        <input type="number" id="cardID" placeholder="Card ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="cardBal">Balance</label>
-                        <input type="number" id="cardBal" placeholder="Balance">
-                    </div>
-                    <button onclick="">Add Card</button>
-                </div>
-            </div>
-
-            <div style="padding-top: 20px;" class="form-container">
-                <div>
-                    <h3>Set Call Session</h3>
-                    <div class="form-group">
-                        <label for="callID">Call ID</label>
-                        <input type="number" id="callID" placeholder="Select Call ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="startDate">Start Date</label>
-                        <input type="date" id="startDate">
-                    </div>
-                    <div class="form-group">
-                        <label for="startTime">Start Time</label>
-                        <input type="time" id="startTime">
-                    </div>
-                    <div class="form-group">
-                        <label for="endDate">End Date</label>
-                        <input type="date" id="endDate">
-                    </div>
-                    <div class="form-group">
-                        <label for="endTime">End Time</label>
-                        <input type="time" id="endTime">
-                    </div>
-                    <button onclick="">Add Call Session</button>
-                </div>
-
-                <div>
-                    <h3>Make Payment</h3>
-                    <div class="form-group">
-                        <label for="payPaid">Select Payment ID</label>
-                        <input type="number"    id="payPaid"    placeholder="Select Payment ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="payCust">Select Customer ID</label>
-                        <input type="number"    id="payCust"    placeholder="Select Customer ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="payCard">Select Card ID</label>
-                        <input type="number"    id="payCard"    placeholder="Select Card ID"><br>
-                    </div>
-                    
-                    <button onclick="">Make Payment</button>
-                </div>
-            </div>
         </div>
         <div class="generalTables">
             <h2>General Tables</h2>

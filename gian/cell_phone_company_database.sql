@@ -124,7 +124,6 @@ CREATE TABLE BILL(
 	Start_date			DATE,			CONSTRAINT BILL_composite_pk	PRIMARY KEY (Plan_ID,Start_date),
 	End_date			DATE, /* Violates 2NF but is very useful for bill calculation purposes */
 	Total				DECIMAL(15,2) DEFAULT 0,
-	Payment				DECIMAL(15,2) DEFAULT 0,
 	remaining_balance	DECIMAL(15, 2) DEFAULT 0
 );
 
@@ -167,3 +166,29 @@ INSERT INTO PLAN_OPTION VALUES
 	(1,0.50,0.55,180,0.50,0.55,254),
 	(2,0.55,0.75,150,0.25,0.30,508),
 	(3,0.25,0.30,200,0.55,0.75,152);
+
+----------- INDEXING --------------------------------------------
+DROP INDEX IF EXISTS idx_plan_id;
+DROP INDEX IF EXISTS idx_customer_phone;
+DROP INDEX IF EXISTS idx_customer_plan_id;
+DROP INDEX IF EXISTS idx_bill_plan_id;
+DROP INDEX IF EXISTS idx_bill_start_date;
+DROP INDEX IF EXISTS idx_card_phone;
+DROP INDEX IF EXISTS idx_call_phone_start_time;
+DROP INDEX IF EXISTS idx_usage_phone_date_rec;
+DROP INDEX IF EXISTS idx_hist_cardID;
+
+CREATE UNIQUE INDEX idx_plan_id ON PLAN (ID);
+
+CREATE UNIQUE INDEX idx_customer_phone ON CUSTOMER (Phone);
+CREATE INDEX idx_customer_plan_id ON CUSTOMER (Plan_ID);
+
+CREATE INDEX idx_bill_plan_id ON BILL (Plan_ID);
+CREATE INDEX idx_bill_start_date ON BILL (Start_date);
+
+CREATE INDEX idx_card_phone ON CARD (Phone);
+
+CREATE INDEX idx_call_phone_start_time ON CALL (Phone, Start_time);
+CREATE INDEX idx_usage_phone_date_rec ON USAGE (Phone, Date_rec);
+
+CREATE INDEX idx_hist_cardID ON PAYMENT_HIST (Card_id);

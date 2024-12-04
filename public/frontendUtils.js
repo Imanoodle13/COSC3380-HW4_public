@@ -17,6 +17,10 @@ async function getCustomers() {
             row.insertCell(4).textContent = customer.address;
             row.insertCell(5).textContent = customer.plan_id
             row.insertCell(6).textContent = customer.enroll_date;
+
+            if (customerTable.rows.length > 100) {
+                customerTable.deleteRow(0);
+            }
         });
     } catch (error) {
         console.error('Error fetching customers:', error);
@@ -68,6 +72,80 @@ async function getPlanOptions() {
         });
     } catch (err) {
         console.error('Error fetching plan options: ', err)
+    }
+}
+
+async function getCardInfo() {
+    try {
+        const response = await fetch('/cardInfo');
+        const cardInfo = await response.json();
+
+        const card_info_table = document.getElementById('bankTable');
+        card_info_table.innerHTML = '';
+
+        cardInfo.forEach(card => {
+            const row = card_info_table.insertRow();
+            row.insertCell(0).textContent = card.id;
+            row.insertCell(1).textContent = card.phone;
+            row.insertCell(2).textContent = card.balance;
+
+            if (card_info_table.rows.length > 100) {
+                card_info_table.deleteRow(0);
+            }
+        });
+
+    } catch (err) {
+        console.error('Error printing card info: ', err);
+    }
+}
+
+async function getBilling() {
+    try {
+        const response = await fetch('/billInfo');
+        const billings = await response.json();
+
+        const bill_table = document.getElementById('billingTable');
+        bill_table.innerHTML = '';
+
+        billings.forEach(bill => {
+            const row = bill_table.insertRow();
+            row.insertCell(0).textContent = bill.plan_id;
+            row.insertCell(1).textContent = bill.start_date;
+            row.insertCell(2).textContent = bill.end_date;
+            row.insertCell(3).textContent = bill.total;
+            row.insertCell(4).textContent = bill.remaining_balance;
+
+            if (bill_table.rows.length > 250) {
+                bill_table.deleteRow(0);
+            }
+        });
+    } catch (err) {
+        console.error('Error printing billing table: ', err);
+    }
+}
+
+async function getHistory() {
+    try {
+        const response = await fetch('/history');
+        const payments = await response.json();
+
+        const history_table = document.getElementById('paymentHistoryTable');
+        history_table.innerHTML = '';
+
+        payments.forEach(payment => {
+            const row = history_table.insertRow();
+            row.insertCell(0).textContent = payment.card_id;
+            row.insertCell(1).textContent = payment.date_rec;
+            row.insertCell(2).textContent = payment.amount;
+
+            if (history_table.rows.length > 250) {
+                history_table.deleteRow(0);
+            }
+        });
+
+        const payment_table = document.getElementById('')
+    } catch (err) {
+        console.error('Error printing payment history table: ', err);
     }
 }
 
@@ -289,6 +367,10 @@ async function getCalls() {
             row.insertCell(0).textContent = call.phone;
             row.insertCell(1).textContent = call.start_time;
             row.insertCell(2).textContent = call.end_time;
+
+            if (callsTable.rows.length > 250) {
+                callsTable.deleteRow(0);
+            }
         });
     } catch (err) {
         console.error('Error populating calls table: ', err);
@@ -308,6 +390,10 @@ async function getUsage() {
             row.insertCell(0).textContent = usage.phone;
             row.insertCell(1).textContent = usage.date_rec;
             row.insertCell(2).textContent = usage.used;
+
+            if(usageTable.rows.length > 250) {
+                usageTable.deleteRow(0);
+            }
         });
     } catch (err) {
         console.error('Error populating calls table: ', err);
@@ -445,6 +531,8 @@ async function generatePlans() {
     const count = parseInt(document.getElementById('planCount').value);
     console.log("Generate plans function called, count: ", count);
     const promises = [];
+    const card_promises = [];
+
     let plan_options = [];
 
     try {
@@ -475,18 +563,26 @@ async function generatePlans() {
                 enroll_date: enrollment_date,
             };
 
-            promises.push(
-                fetch('/customer-plan', {
+
+            const plan_response = await fetch('/customer-plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(new_plan),
+            })
+
+            const cardPromise = fetch('/card', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(new_plan),
-                })
-            );
+                    body: JSON.stringify({ phone }),
+            });
+            promises.push(cardPromise);
         }
 
-        const result = await Promise.all(promises);
+        const card_result = await Promise.all(promises);
 
         const endTime = performance.now();
         const elapsed = endTime - startTime;
@@ -545,15 +641,22 @@ async function generateCustomers() {
                 enroll_date: random_enrollment,
             };
 
-            promises.push(
-                fetch('/customer', {
+            const customerResponse = await fetch('/customer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(customer),
+            })
+
+            const cardPromise = fetch('/card', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(customer),
-                })
-            );
+                    body: JSON.stringify({ phone }),
+            });
+            promises.push(cardPromise);
         }
         const results = await Promise.all(promises);
 
@@ -608,6 +711,7 @@ async function generateCalls() {
                     body: JSON.stringify(call),
                 })
             );
+
         }
         const endTime = performance.now();
         const elapsed = endTime - startTime;
@@ -618,6 +722,7 @@ async function generateCalls() {
         console.error('Error generating calls: ', err);
     }
 }
+
 
 async function simulate() {
     try {
