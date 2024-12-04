@@ -350,6 +350,12 @@ app.post('/bill', async (req, res) => {
    res.status(200).send('Bills created successfully');
 });
 
+
+/**
+ * Calculate Billing
+ * Concurrency enabled for calculating call and usage cost separately in parallel
+ * final cost update is not concurrent due to writing errors and concerns
+ */
 app.put('/bill', async (req, res) => {
     const client = await pool.connect();
 
@@ -367,7 +373,6 @@ app.put('/bill', async (req, res) => {
                     po.C_limit,
                     SUM(EXTRACT(EPOCH FROM (cl.End_time::TIMESTAMP - cl.Start_time::TIMESTAMP))) / 60 AS call_duration
                    
-                
                     FROM PLAN AS p
                     
                 JOIN PLAN_OPTION AS po 
@@ -386,9 +391,6 @@ app.put('/bill', async (req, res) => {
                         po.C_over_rate,
                         po.C_limit
         `;
-        await client.query(call_query);
-
-        await client.query('UPDATE call SET billed = true WHERE billed = false');
 
         const cost_calls_query = `
             CREATE TEMPORARY TABLE cost_of_calls AS
@@ -402,7 +404,6 @@ app.put('/bill', async (req, res) => {
                    
                    FROM call_totals AS a
         `;
-        await client.query(cost_calls_query);
 
         //sum usage per plan per month
         const usage_query = `
@@ -433,9 +434,6 @@ app.put('/bill', async (req, res) => {
                         po.U_over_rate,
                         po.U_limit
         `;
-        await client.query(usage_query);
-
-        await client.query('UPDATE usage SET billed = true WHERE billed = false');
 
         const cost_usage_query = `
             CREATE TEMPORARY TABLE cost_of_usage AS
@@ -449,8 +447,18 @@ app.put('/bill', async (req, res) => {
                    
                    FROM usage_totals as a
         `;
-        await client.query(cost_usage_query);
 
+        await Promise.all([
+            client.query(call_query),
+            client.query(usage_query)
+        ]);
+
+        await Promise.all([
+            client.query(cost_usage_query),
+            client.query(cost_calls_query)
+        ]);
+
+        //update costs
         await client.query(`
             UPDATE bill 
             SET 
@@ -460,7 +468,6 @@ app.put('/bill', async (req, res) => {
             WHERE bill.plan_id = c.plan_id AND EXTRACT(MONTH FROM bill.start_date) = c.month_of_calls
         `);
 
-
         await client.query(`
             UPDATE bill 
             SET 
@@ -469,6 +476,9 @@ app.put('/bill', async (req, res) => {
             FROM cost_of_usage as u
             WHERE bill.plan_id = u.plan_id AND EXTRACT(MONTH FROM bill.start_date) = u.month_of_usage
         `);
+
+        await client.query('UPDATE call SET billed = true WHERE billed = false');
+        await client.query('UPDATE usage SET billed = true WHERE billed = false');
 
         await client.query('COMMIT');
         res.status(200).send('Bill successfully calculated')
