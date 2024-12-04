@@ -473,6 +473,7 @@ app.put('/bill', async (req, res) => {
 /**
  * Cards and payment
  * Every customer will be automatically generated with one card
+ *
  */
 
 app.post('/card', async (req, res) => {
