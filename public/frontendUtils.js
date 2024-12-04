@@ -315,7 +315,64 @@ async function getUsage() {
 }
 
 async function addCard() {
+    const phone = document.getElementById('cardCust').value;
+    try {
+        await fetch('/card', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+               phone
+            })
+        });
+        alert('Card added successfully!');
+    } catch (err) {
+        alert('Error adding card');
+        console.error('Error adding card: ', err);
+    }
+}
 
+async function makePayment() {
+    const plan_id = document.getElementById('planID').value;
+    const start_date = document.getElementById('startDate').value;
+    const card_id = document.getElementById('cardID').value;
+    const payment_amount = document.getElementById('paymentAmount').value;
+
+    if (!plan_id || !start_date || !card_id || !payment_amount) {
+        alert('Please fill in all fields.');
+        return;
+    }
+
+    const payment_date = new Date().toISOString().split('T')[0];
+
+    const payment = {
+        plan_id: parseInt(plan_id),
+        start_date: start_date,
+        card_id: parseInt(card_id),
+        payment_amount: parseFloat(payment_amount),
+        payment_date: payment_date
+    };
+
+    try {
+        const response = await fetch('/card', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payment)
+        });
+
+        if (response.ok) {
+            alert('Payment successful!');
+        } else {
+            const errorMessage = await response.text();
+            alert(`Payment failed: ${errorMessage}`);
+        }
+    } catch (err) {
+        console.error('Error making payment:', err);
+        alert('An error occurred while processing the payment.');
+    }
 }
 
 // General random generation functions
@@ -603,7 +660,6 @@ async function updateBills() {
         alert('Error Updating Bills');
     }
 
-    console.log('After update request');
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =
