@@ -74,8 +74,8 @@
           <table>
               <thead>
                   <tr>
-                      <th>Customer ID</th>
                       <th>Card ID</th>
+                      <th>Phone Number</th>
                       <th>Balance</th>
                   </tr>
               </thead>
@@ -89,31 +89,14 @@
           <table>
               <thead>
                   <tr>
-                      <th>ID</th>
-                      <th>Usage ID</th>
                       <th>Plan ID</th>
-                      <th>Tax</th>
-                      <th>Cost</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Total</th>
+                      <th>Remaining Balance</th>
                   </tr>
               </thead>
               <tbody id="billingTable"></tbody>
-          </table>
-      </div>
-
-      <!-- PAYMENT -->
-      <div>
-          <h2>Payment</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>ID</th>
-                      <th>Customer ID</th>
-                      <th>Card ID</th>
-                      <th>Bill ID</th>
-                      <th>Paid</th>
-                  </tr>
-              </thead>
-              <tbody id="paymentTable"></tbody>
           </table>
       </div>
 
@@ -147,6 +130,21 @@
           </table>
       </div>
 
+      <!-- PAYMENT HISTORY -->
+      <div>
+          <h2>Payment History</h2>
+          <table>
+              <thead>
+                  <tr>
+                      <th>Card ID</th>
+                      <th>Date</th>
+                      <th>Amount</th>
+                  </tr>
+              </thead>
+              <tbody id="paymentHistoryTable"></tbody>
+          </table>
+      </div>
+
     </div>
 
     <script src="frontendUtils.js"></script>
@@ -157,6 +155,9 @@
             getPlan();
             getCalls();
             getUsage();
+            getCardInfo();
+            getBilling();
+            getHistory();
 
             setInterval(getCustomers, 60000) // refresh every minute
         });
