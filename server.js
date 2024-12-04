@@ -13,7 +13,6 @@ app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Changed
-/**
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -21,7 +20,7 @@ const pool = new Pool({
     password: 'group16!',
     port: 5433
 });
-*/
+/*
 // http://localhost:3000/index.html
 // http://localhost:3000/admin.html
 // http://localhost:3000/customer.html
@@ -32,7 +31,7 @@ const pool = new Pool({
     database: 'HW4',
     password: 't1T4n_F411',
     port: 5432
-});
+});*/
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -41,6 +40,12 @@ app.get('/', (req, res) => {
 app.get('/styles.css', (req, res) => {
     res.sendFile(path.join(__dirname, 'styles.css'));
 });
+
+/**
+ * Plans and customers
+ * customers must exist under plans, so generate plans first and attach customers later
+ * A plan will have at least 1 customer with no cap on total customers
+ */
 
 // Fetch customers from database
 app.get('/customer', async (req, res) => {
@@ -127,8 +132,7 @@ app.get('/plan', async (req, res) => {
    }
 });
 
-/////     /////     /////     /////     /////     /////     /////     /////     /////     
-// Get Popular Plans
+/////     /////     /////     /////     /////     /////     /////     /////     /////
 app.get('/PopularPlans', async (req, res) => {
     try {
         const query = `
@@ -148,6 +152,7 @@ app.get('/PopularPlans', async (req, res) => {
     }
 });
 
+// Get Popular Plans
 app.get('/EarningsPerPlan', async (req, res) => {
     const year = req.query.year || 2024; // Default year
     const month = req.query.month || 1; // Default month
@@ -198,7 +203,8 @@ app.get('/limitsReached', async (req, res) => {
         res.status(500).send('Error fetching limits');
     }
 });
-/////     /////     /////     /////     /////     /////     /////     /////     /////     
+
+/////     /////     /////     /////     /////     /////     /////     /////     /////
 
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {
@@ -234,12 +240,19 @@ app.post('/customer-plan', async (req, res) => {
     }
 });
 
+/**
+ * Create calls and usage data
+ * Every aspect about call generation is random
+ * usage data is generated every day for the customer
+ */
+
 app.get('/call', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM call');
         res.json(result.rows);
     } catch (err) {
         console.error('Error while fetching calls: ', err);
+        res.sendStatus(500);
     }
 });
 
@@ -276,43 +289,55 @@ app.get('/usage', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching usage data: ', err);
+        res.sendStatus(500);
     }
 });
 
-// post to create empty bills that don't exist yet
+/**
+ * BILLING
+ * bills will be generated for every plan
+ */
+
 app.post('/bill', async (req, res) => {
-   console.log('Create bill request received');
+   //console.log('Create bill request received');
    const client = await pool.connect();
 
-   await client.query('BEGIN');
-
    try {
+       await client.query('BEGIN');
        // get all plans without a bill already created
        const result = await client.query(`
-            SELECT a.ID, a.Signup_date
-            FROM plan as a
-            LEFT OUTER JOIN bill as b ON a.ID = b.Plan_ID
-            WHERE b.Plan_ID is null`);
-
+            SELECT 
+                a.ID,
+                COALESCE(MAX(b.End_date), a.Signup_date) AS latest_date --if no bills use signup, otherwise latest end date
+                
+                FROM plan AS a
+                
+                LEFT OUTER JOIN bill as b
+                    ON a.ID = b.Plan_Id
+                GROUP BY a.ID
+       `);
        for (let row of result.rows) {
            const plan_id = row.id;
-           let start_date = new Date(row.signup_date);
+           let start_date = new Date(row.latest_date);
+
            while(start_date <= new Date()) {
                await client.query('INSERT INTO bill (Plan_ID, Start_date) VALUES ($1, $2)',
                     [plan_id, start_date.toISOString().split('T')[0]]
                );
                await client.query('UPDATE bill SET End_date = Start_date + INTERVAL \'1 month\'  WHERE Plan_ID = $1 AND Start_date = $2', [plan_id, start_date.toISOString().split('T')[0]]);
 
-               new Date(start_date).setMonth(start_date.getMonth() + 1);
+               start_date.setMonth(start_date.getMonth() + 1);
            }
        }
        await client.query('COMMIT')
    } catch (err) {
        await client.query('ROLLBACK');
        console.error('Error creating bills: ', err);
+       res.sendStatus(500);
    } finally {
        client.release();
    }
+   res.status(200).send('Bills created successfully');
 });
 
 app.put('/bill', async (req, res) => {
@@ -439,6 +464,84 @@ app.put('/bill', async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Error updating billing tables: ', err);
+        res.sendStatus(500);
+    } finally {
+        client.release();
+    }
+});
+
+/**
+ * Cards and payment
+ * Every customer will be automatically generated with one card
+ */
+
+app.post('/card', async (req, res) => {
+    const client = await pool.connect();
+
+    const { phone } = req.body;
+
+    try {
+        await client.query('BEGIN');
+
+        await client.query('INSERT INTO card (phone) VALUES ($1)', [phone]);
+
+        await client.query('COMMIT');
+        res.sendStatus(201);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error adding card');
+        res.sendStatus(500);
+    } finally {
+        client.release();
+    }
+});
+
+app.put('/card', async (req, res) => {
+    const client = await pool.connect();
+
+    let { plan_id, start_date, card_id, payment_amount, payment_date } = req.body;
+    start_date = new Date(start_date).toISOString().split('T')[0];
+
+    const result = await client.query(`SELECT remaining_balance FROM bill WHERE plan_id = $1 AND Start_date = $2`,
+        [plan_id, start_date]
+    );
+    const to_pay = result.rows[0].remaining_balance;
+
+    if(result.rows.length === 0) {
+        res.status(404).send("Bill not found");
+        client.release();
+        return;
+    }
+    if (to_pay === 0) {
+        res.status(400).send("Bill already paid");
+        client.release();
+        return;
+    }
+    if (payment_amount > to_pay) { //avoid customer from overpaying on a bill
+        payment_amount = to_pay;
+    }
+
+    try {
+        await client.query('BEGIN');
+
+        await client.query(`UPDATE card SET balance = balance - $1 WHERE ID = $2`,
+            [payment_amount, card_id]
+        );
+
+        await client.query('INSERT INTO payment_hist (Card_id, Date_rec, Amount) VALUES ($1, $2, $3)',
+            [card_id, payment_date, payment_amount]
+        );
+
+        await client.query(`
+           UPDATE bill SET remaining_balance = remaining_balance - $1
+           WHERE Plan_ID = $2 AND Start_date = $3`,
+            [payment_amount ,plan_id, start_date]);
+
+        await client.query('COMMIT');
+        res.sendStatus(201);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error updating bill or card balance: ', err);
         res.sendStatus(500);
     } finally {
         client.release();
