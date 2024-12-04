@@ -17,6 +17,10 @@ async function getCustomers() {
             row.insertCell(4).textContent = customer.address;
             row.insertCell(5).textContent = customer.plan_id
             row.insertCell(6).textContent = customer.enroll_date;
+
+            if (customerTable.rows.length > 100) {
+                customerTable.deleteRow(0);
+            }
         });
     } catch (error) {
         console.error('Error fetching customers:', error);
@@ -71,6 +75,80 @@ async function getPlanOptions() {
     }
 }
 
+async function getCardInfo() {
+    try {
+        const response = await fetch('/cardInfo');
+        const cardInfo = await response.json();
+
+        const card_info_table = document.getElementById('bankTable');
+        card_info_table.innerHTML = '';
+
+        cardInfo.forEach(card => {
+            const row = card_info_table.insertRow();
+            row.insertCell(0).textContent = card.id;
+            row.insertCell(1).textContent = card.phone;
+            row.insertCell(2).textContent = card.balance;
+
+            if (card_info_table.rows.length > 100) {
+                card_info_table.deleteRow(0);
+            }
+        });
+
+    } catch (err) {
+        console.error('Error printing card info: ', err);
+    }
+}
+
+async function getBilling() {
+    try {
+        const response = await fetch('/billInfo');
+        const billings = await response.json();
+
+        const bill_table = document.getElementById('billingTable');
+        bill_table.innerHTML = '';
+
+        billings.forEach(bill => {
+            const row = bill_table.insertRow();
+            row.insertCell(0).textContent = bill.plan_id;
+            row.insertCell(1).textContent = bill.start_date;
+            row.insertCell(2).textContent = bill.end_date;
+            row.insertCell(3).textContent = bill.total;
+            row.insertCell(4).textContent = bill.remaining_balance;
+
+            if (bill_table.rows.length > 250) {
+                bill_table.deleteRow(0);
+            }
+        });
+    } catch (err) {
+        console.error('Error printing billing table: ', err);
+    }
+}
+
+async function getHistory() {
+    try {
+        const response = await fetch('/history');
+        const payments = await response.json();
+
+        const history_table = document.getElementById('paymentHistoryTable');
+        history_table.innerHTML = '';
+
+        payments.forEach(payment => {
+            const row = history_table.insertRow();
+            row.insertCell(0).textContent = payment.card_id;
+            row.insertCell(1).textContent = payment.date_rec;
+            row.insertCell(2).textContent = payment.amount;
+
+            if (history_table.rows.length > 250) {
+                history_table.deleteRow(0);
+            }
+        });
+
+        const payment_table = document.getElementById('')
+    } catch (err) {
+        console.error('Error printing payment history table: ', err);
+    }
+}
+
 /////     /////     /////     /////     /////     /////     /////     /////     /////     
 //List Plan Options and Plan Count for each
 async function getPopularPlans() {
@@ -120,7 +198,7 @@ async function getEarningsPerPlan(year = 2024, month = 1) {
 
         earnings.forEach(plan => {
             const row = earningsTable.insertRow();
-            row.insertCell(0).textContent = plan["option"];
+            row.insertCell(0).textContent = plan["Option"];
             row.insertCell(1).textContent = plan["Total Earned"];
         });
     } catch (err) {
@@ -227,6 +305,46 @@ function loadMoreRows() {
     }
 }
 
+function formatPhoneNumber(phone) {
+    return phone.replace(/[^0-9]/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '($1)$2-$3');
+}
+
+async function checkBill() {
+    const phone = document.getElementById('searchPhone').value.trim(); // Get the phone number
+
+    const tableBody = document.getElementById('checkBillTable');
+    tableBody.innerHTML = ''; // Clear the table before adding new rows
+
+    try {
+        // Fetch the data from the server
+        const response = await fetch(`/CheckBill?phone=${encodeURIComponent(phone)}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching bill: ${response.statusText}`);
+        }
+
+        const bills = await response.json();
+        console.log('Received Bills: ', bills); // Debugging log
+
+        if (bills.length === 0) {
+            // If no bills are found, show a message in the table
+            const row = tableBody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 2;
+            cell.textContent = 'No records found for this phone number.';
+            cell.style.textAlign = 'center';
+            return;
+        }
+
+        // Loop through the bills and add rows to the table
+        bills.forEach(bill => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = bill["Plan_ID"]; // Use the exact property name from the server response
+            row.insertCell(1).textContent = bill["Total_Owed"]; // Use the exact property name from the server response
+        });
+    } catch (err) {
+        console.error('Error fetching bill:', err);
+    }
+}
 /////     /////     /////     /////     /////     /////     /////     /////     /////     
 
 //Get Plans
@@ -289,6 +407,10 @@ async function getCalls() {
             row.insertCell(0).textContent = call.phone;
             row.insertCell(1).textContent = call.start_time;
             row.insertCell(2).textContent = call.end_time;
+
+            if (callsTable.rows.length > 250) {
+                callsTable.deleteRow(0);
+            }
         });
     } catch (err) {
         console.error('Error populating calls table: ', err);
@@ -308,6 +430,10 @@ async function getUsage() {
             row.insertCell(0).textContent = usage.phone;
             row.insertCell(1).textContent = usage.date_rec;
             row.insertCell(2).textContent = usage.used;
+
+            if(usageTable.rows.length > 250) {
+                usageTable.deleteRow(0);
+            }
         });
     } catch (err) {
         console.error('Error populating calls table: ', err);
@@ -445,6 +571,8 @@ async function generatePlans() {
     const count = parseInt(document.getElementById('planCount').value);
     console.log("Generate plans function called, count: ", count);
     const promises = [];
+    const card_promises = [];
+
     let plan_options = [];
 
     try {
@@ -475,18 +603,26 @@ async function generatePlans() {
                 enroll_date: enrollment_date,
             };
 
-            promises.push(
-                fetch('/customer-plan', {
+
+            const plan_response = await fetch('/customer-plan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(new_plan),
+            })
+
+            const cardPromise = fetch('/card', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(new_plan),
-                })
-            );
+                    body: JSON.stringify({ phone }),
+            });
+            promises.push(cardPromise);
         }
 
-        const result = await Promise.all(promises);
+        const card_result = await Promise.all(promises);
 
         const endTime = performance.now();
         const elapsed = endTime - startTime;
@@ -545,15 +681,22 @@ async function generateCustomers() {
                 enroll_date: random_enrollment,
             };
 
-            promises.push(
-                fetch('/customer', {
+            const customerResponse = await fetch('/customer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(customer),
+            })
+
+            const cardPromise = fetch('/card', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(customer),
-                })
-            );
+                    body: JSON.stringify({ phone }),
+            });
+            promises.push(cardPromise);
         }
         const results = await Promise.all(promises);
 
@@ -608,6 +751,7 @@ async function generateCalls() {
                     body: JSON.stringify(call),
                 })
             );
+
         }
         const endTime = performance.now();
         const elapsed = endTime - startTime;
@@ -616,6 +760,56 @@ async function generateCalls() {
 
     } catch (err) {
         console.error('Error generating calls: ', err);
+    }
+}
+
+async function generatePayments(paymentCount) {
+    const [cardsResponse, customersResponse, plansResponse, billsResponse] = await Promise.all([
+        fetch('/cardInfo'),
+        fetch('/customer'),
+        fetch('/plan'),
+        fetch('/billInfo')
+    ]);
+
+    const cards = await cardsResponse.json();
+    const customers = await customersResponse.json();
+    const plans = await plansResponse.json();
+    const bills = await billsResponse.json();
+
+    for(let i = 0; i < paymentCount; i++) {
+        const randomCard = cards[randomInt(0, cards.length - 1)];
+
+        const randomCustomer = customers.find(c => c.phone === randomCard.phone);
+
+        const customerPlan = plans.find(plan => plan.id === randomCustomer.plan_id);
+
+        const customerBills = bills.filter(bill => bill.plan_id === customerPlan.id && bill.remaining_balance > 0);
+
+        let randomBill = customerBills[randomInt(0, customerBills.length - 1)];
+
+        let paymentAmount = randomBill.remaining_balance;
+
+        const partial_pay_chance = 0.10;
+        if (Math.random() < partial_pay_chance) {
+            paymentAmount = Math.random() * randomBill.remaining_balance * 0.85 + randomBill.remaining_balance * .15;
+        }
+
+        const paymentDate = new Date(randomDate(new Date(randomBill.start_date), new Date(randomBill.end_date))).toISOString().split('T')[0];
+
+        await fetch('/card', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: customerPlan.id,
+                start_date: randomBill.start_date,
+                card_id: randomCard.id,
+                payment_amount: paymentAmount,
+                payment_date: paymentDate
+            })
+        });
+
     }
 }
 
@@ -662,6 +856,11 @@ async function updateBills() {
     }
 
     console.log('After update request');
+
+    const paymentCount = document.getElementById('paymentCount').value;
+    await generatePayments(paymentCount);
+    console.log(`${paymentCount} Payments generated successfully.`);
+
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =
