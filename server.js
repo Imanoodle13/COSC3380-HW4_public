@@ -12,12 +12,25 @@ app.use(cors()); // Enable CORS for cross-origin requests
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'cell_phone_company_db',
     password: 'group16!',
     port: 5433,
+});
+*/
+// http://localhost:3000/index.html
+// http://localhost:3000/admin.html
+// http://localhost:3000/customer.html
+// http://localhost:3000/tableView.html
+const pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'HW4',
+    password: 't1T4n_F411',
+    port: 5432
 });
 
 app.get('/', (req, res) => {
@@ -130,7 +143,36 @@ app.get('/PopularPlans', async (req, res) => {
     }
 });
 
-// Get Popular Plans
+
+app.get('/EarningsPerPlan', async (req, res) => {
+    const year = req.query.year || 2024; // Default year
+    const month = req.query.month || 1; // Default month
+
+    try {
+        const query = `
+            SELECT 
+                PLAN_OPTION.Option             AS "Option",
+                COALESCE(SUM(BILL.Payment), 0) AS "Total Earned"
+            FROM PLAN_OPTION
+            LEFT JOIN PLAN ON PLAN_OPTION.Option = PLAN.Option
+            LEFT JOIN BILL ON 
+                PLAN.ID = BILL.Plan_ID AND 
+                EXTRACT(YEAR FROM BILL.Start_date) = $1 AND 
+                EXTRACT(MONTH FROM BILL.Start_date) = $2
+            GROUP BY PLAN_OPTION.Option
+            ORDER BY "Total Earned" DESC;
+        `;
+        const result = await pool.query(query, [year, month]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching earnings per plan: ', err);
+        res.status(500).send('Error fetching earnings per plan');
+    }
+});
+
+
+  
+// Get popular plans  
 app.get('/limitsReached', async (req, res) => {
     try {
         const query = `
@@ -155,6 +197,7 @@ app.get('/limitsReached', async (req, res) => {
         res.status(500).send('Error fetching limits');
     }
 });
+
 
 /////     /////     /////     /////     /////     /////     /////     /////     /////
 
