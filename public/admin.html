@@ -18,17 +18,17 @@
         <!-- Random Generation -->
        <div>
            <label for="planCount">Number of plans to generate with initial customer:</label>
-           <input type="number" id="planCount" min="1" value="10">
+           <input type="number" id="planCount" min="1" value="70">
        </div>
         <p id="planTimeTaken"></p>
        <div>
            <label for="customerCount">Number of customers to generate for existing plans:</label>
-           <input type="number" id="customerCount" min="1" value="20">
+           <input type="number" id="customerCount" min="1" value="200">
        </div>
         <p id="customerTimeTaken"></p>
        <div>
            <label for="callCount">Number of calls to generate:</label>
-           <input type="number" id="callCount" min="1" value="50">
+           <input type="number" id="callCount" min="1" value="2000">
        </div>
         <p id="callTimeTaken"></p>
 
@@ -37,9 +37,11 @@
        </div>
 
        <div>
+        <label for="paymentCount">Number of payments to generate</label>
+        <input type="number" id="paymentCount" min="1" value="500">
            <button onclick="updateBills()">Update Bills</button>
        </div>
-        <p id="billUpdateTimeTaken"></p>
+       <p id="billUpdateTimeTaken" style="margin-bottom: 15px"></p>
 
         <!-- Form Section -->
         <div class="form-section">
@@ -142,7 +144,7 @@
             <div>
                 <!-- Plan Earnings per Month -->
                 <h3>Plan Earnings per Month</h3>
-    <div>
+            <div>
         <label for="yearSelect">Year:</label>
         <select id="yearSelect" onchange="loadEarningsForSelectedMonth()">
             <option value="2024" selected>2024</option>
