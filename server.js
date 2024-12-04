@@ -460,6 +460,7 @@ app.put('/bill', async (req, res) => {
             WHERE bill.plan_id = c.plan_id AND EXTRACT(MONTH FROM bill.start_date) = c.month_of_calls
         `);
 
+
         await client.query(`
             UPDATE bill 
             SET 
@@ -530,12 +531,10 @@ app.put('/card', async (req, res) => {
 
     if(result.rows.length === 0) {
         res.status(404).send("Bill not found");
-        client.release();
         return;
     }
     if (to_pay === 0) {
         res.status(400).send("Bill already paid");
-        client.release();
         return;
     }
     if (payment_amount > to_pay) { //avoid customer from overpaying on a bill
@@ -545,18 +544,21 @@ app.put('/card', async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        await client.query(`UPDATE card SET balance = balance - $1 WHERE ID = $2`,
-            [payment_amount, card_id]
-        );
+        await Promise.all([
+            client.query(`UPDATE card SET balance = balance - $1 WHERE ID = $2`,
+                [payment_amount, card_id]
+            ),
 
-        await client.query('INSERT INTO payment_hist (Card_id, Date_rec, Amount) VALUES ($1, $2, $3)',
-            [card_id, payment_date, payment_amount]
-        );
+            client.query('INSERT INTO payment_hist (Card_id, Date_rec, Amount) VALUES ($1, $2, $3)',
+                [card_id, payment_date, payment_amount]
+            ),
 
-        await client.query(`
-           UPDATE bill SET remaining_balance = remaining_balance - $1
-           WHERE Plan_ID = $2 AND Start_date = $3`,
-            [payment_amount ,plan_id, start_date]);
+            client.query(`
+                UPDATE bill SET remaining_balance = remaining_balance - $1
+                WHERE Plan_ID = $2 AND Start_date = $3`,
+                [payment_amount ,plan_id, start_date]
+            )
+        ]);
 
         await client.query('COMMIT');
         res.sendStatus(201);

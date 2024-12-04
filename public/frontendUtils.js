@@ -724,17 +724,22 @@ async function generateCalls() {
 }
 
 async function generatePayments(paymentCount) {
-    const [cardsResponse, customersResponse, plansResponse, billsResponse] = await Promise.all([
+    const [cardsResponse, customersResponse, plansResponse, billsResponse, historyResponse] = await Promise.all([
         fetch('/cardInfo'),
         fetch('/customer'),
         fetch('/plan'),
-        fetch('/billInfo')
+        fetch('/billInfo'),
+        fetch('/history')
     ]);
 
     const cards = await cardsResponse.json();
     const customers = await customersResponse.json();
     const plans = await plansResponse.json();
     const bills = await billsResponse.json();
+    const history = await historyResponse.json();
+
+    const promises = [];
+    const seenPayments = new Set();
 
     for(let i = 0; i < paymentCount; i++) {
         const randomCard = cards[randomInt(0, cards.length - 1)];
@@ -744,6 +749,11 @@ async function generatePayments(paymentCount) {
         const customerPlan = plans.find(plan => plan.id === randomCustomer.plan_id);
 
         const customerBills = bills.filter(bill => bill.plan_id === customerPlan.id && bill.remaining_balance > 0);
+
+        if (customerBills.length === 0) {
+            console.warn(`No bills found for plan ID: ${customerPlan.id}`);
+            continue;
+        }
 
         let randomBill = customerBills[randomInt(0, customerBills.length - 1)];
 
@@ -756,21 +766,40 @@ async function generatePayments(paymentCount) {
 
         const paymentDate = new Date(randomDate(new Date(randomBill.start_date), new Date(randomBill.end_date))).toISOString().split('T')[0];
 
-        await fetch('/card', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                plan_id: customerPlan.id,
-                start_date: randomBill.start_date,
-                card_id: randomCard.id,
-                payment_amount: paymentAmount,
-                payment_date: paymentDate
+        const existingPayment = history.filter(record =>
+            record.card_id === randomCard.id && record.Date_rec === paymentDate
+        );
+        if (existingPayment.length > 0) {
+            console.warn(`Duplicate payment attempt for Card: ${randomCard.id} on date: ${paymentDate}`);
+            continue;
+        }
+
+        const paymentKey = `${randomCard.id}-${paymentDate}`;
+        if(seenPayments.has(paymentKey)) {
+            console.warn(`Duplicate payment attempt for Card: ${randomCard.id} on date: ${paymentDate}`);
+            continue;
+        }
+
+        seenPayments.add(paymentKey);
+
+        promises.push(
+            fetch ('/card', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    plan_id: customerPlan.id,
+                    start_date: randomBill.start_date,
+                    card_id: randomCard.id,
+                    payment_amount: paymentAmount,
+                    payment_date: paymentDate
+                })
             })
-        });
+        );
 
     }
+    await Promise.all(promises);
 }
 
 async function simulate() {
