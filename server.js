@@ -13,7 +13,6 @@ app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Changed
-
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -205,7 +204,7 @@ app.get('/limitsReached', async (req, res) => {
     }
 });
 
-/////     /////     /////     /////     /////     /////     /////     /////     //////
+//// //// //// //// //// //// //// ////
 
 //Create a plan with an initial customer
 app.post('/customer-plan', async (req, res) => {
@@ -474,6 +473,7 @@ app.put('/bill', async (req, res) => {
 /**
  * Cards and payment
  * Every customer will be automatically generated with one card
+ *
  */
 
 app.post('/card', async (req, res) => {
