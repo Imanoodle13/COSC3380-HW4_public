@@ -2,164 +2,134 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cell Phone Database</title>
+    <title>Customer Payment Portal (WIP)</title>
+    <script src="frontendUtils.js"></script>
     <link rel="stylesheet" href="/styles.css">
+    <style>
+
+    </style>
 </head>
 <body>
-  <h1>
-    Cell Phone Company Database
-  </h1>
-
-  <div class="button-container" style="margin-bottom: 30px">
-      <button onclick="window.location.href='admin.html'">Admin Portal</button>
-  </div>
-
-  <div class="table-list">
-      <!-- PLAN_OPTION -->
-      <div>
-          <h2>Plan Option</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Option</th>
-                      <th>Call Rate ($ / min)</th>
-                      <th>Call Rate Over Limit ($ / min)</th>
-                      <th>Call Limit (min)</th>
-                      <th>Usage Rate ($ / MB)</th>
-                      <th>Usage Rate Over Limit ($ / MB)</th>
-                      <th>Usage Limit (MB)</th>
-                  </tr>
-              </thead>
-              <tbody id="planOptionTable"></tbody>
-          </table>
-      </div>
-
-      <!-- PLAN -->
-      <div>
-          <h2>Plan</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Plan ID</th>
-                      <th>Plan Option</th>
-                      <th>Plan Start Date</th>
-                  </tr>
-              </thead>
-              <tbody id="planTable"></tbody>
-          </table>
-      </div>
-
-      <!-- CUSTOMER -->
-      <div>
-          <h2>Customer</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Phone</th>
-                      <th>First Name</th>
-                      <th>Last Name</th>
-                      <th>DOB</th>
-                      <th>Address</th>
-                      <th>Plan ID</th>
-                      <th>Enrollment Date</th>
-                  </tr>
-              </thead>
-              <tbody id="customerTable"></tbody>
-          </table>
-      </div>
-
-      <!-- CARD_INFO -->
-      <div>
-          <h2>Card Info</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Card ID</th>
-                      <th>Phone Number</th>
-                      <th>Balance</th>
-                  </tr>
-              </thead>
-              <tbody id="bankTable"></tbody>
-          </table>
-      </div>
-
-      <!-- BILLING -->
-      <div>
-          <h2>Billing</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Plan ID</th>
-                      <th>Start Date</th>
-                      <th>End Date</th>
-                      <th>Total</th>
-                      <th>Remaining Balance</th>
-                  </tr>
-              </thead>
-              <tbody id="billingTable"></tbody>
-          </table>
-      </div>
-
-      <!-- CALL -->
-      <div>
-          <h2>Call</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Phone Number</th>
-                      <th>Start Time</th>
-                      <th>End Time</th>
-                  </tr>
-              </thead>
-              <tbody id="callTable"></tbody>
-          </table>
-      </div>
-
-      <!-- USAGE -->
-      <div>
-          <h2>Usage</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Phone Number</th>
-                      <th>Date</th>
-                      <th>Usage</th>
-                  </tr>
-              </thead>
-              <tbody id="usageTable"></tbody>
-          </table>
-      </div>
-
-      <!-- PAYMENT HISTORY -->
-      <div>
-          <h2>Payment History</h2>
-          <table>
-              <thead>
-                  <tr>
-                      <th>Card ID</th>
-                      <th>Date</th>
-                      <th>Amount</th>
-                  </tr>
-              </thead>
-              <tbody id="paymentHistoryTable"></tbody>
-          </table>
-      </div>
-
+    <div>
+        <h2>Available Plans</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Call Rate</th>
+                    <th>Call Limit</th>
+                    <th>Over Limit Call Rate</th>
+                    <th>Data Usage Rate</th>
+                    <th>Data Usage Limit</th>
+                    <th>Over Limit Data Usage Rate</th>
+                </tr>
+            </thead>
+            <tbody id="planOptionTable"></tbody>
+        </table>
     </div>
 
-    <script src="frontendUtils.js"></script>
+    <!-- Forms -->
+    <div class="form-container" style="margin-bottom: 30px">
+        <h3>New Plan</h3>
+        <div class="form-group">
+            <label for="planOption">Plan Option</label>
+            <input type="number" id="planOption" placeholder="Plan Option">
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" placeholder="Phone">
+        </div>
+        <div class="form-group">
+            <label for="custFN">First Name</label>
+            <input type="text" id="custFN" placeholder="First Name">
+        </div>
+        <div class="form-group">
+            <label for="custLN">Last Name</label>
+            <input type="text" id="custLN" placeholder="Last Name">
+        </div>
+        <div class="form-group">
+            <label for="custDOB">Date of Birth</label>
+            <input type="date" id="custDOB">
+        </div>
+        <div class="form-group">
+            <label for="custAddr">Address</label>
+            <input type="text" id="custAddr" placeholder="Address">
+        </div>
+        <button onclick="createPlan()">Create Plan</button>
+    </div>
+
+    <!-- Cards -->
+    <div class="form-container" style="margin-bottom: 30px">
+        <div>
+            <h3>Add Card</h3>
+            <div class="form-group">
+                <label for="cardCust">Customer Phone Number</label>
+                <input type="text" id="cardCust" placeholder="Select Customer ID">
+            </div>
+        </div>
+        <button onclick="addCard()">Add Card</button>
+    </div>
+
+    <div class="form-container" style="margin-bottom: 30px">
+        <h3>Make Payment on unpaid bill</h3>
+        <div class="form-group">
+            <label for="planID">Plan ID</label>
+            <input type="number" id="planID" min="1" placeholder="Select your plan">
+        </div>
+        <div class="form-group">
+            <label for="startDate">Bill Start Date</label>
+            <input type="date" id="startDate" placeholder="Select starting date of bill to pay">
+        </div>
+        <div class="form-group">
+            <label for="cardID">Card</label>
+            <input type="number" id="cardID" min="1" placeholder="Enter your card information (ID)">
+        </div>
+        <div class="form-group">
+            <label for="paymentAmount">Payment Amount</label>
+            <input type="number" id="paymentAmount" step="0.01" min="0" placeholder="Enter a payment amount">
+        </div>
+        <button onclick="makePayment()">Make Payment</button>
+    </div>
+
+    <!-- Popular Plans -->
+    <div style="margin-bottom: 30px">
+        <h2>Popular Plans</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody id="popularPlansTable"></tbody>
+        </table>
+    </div>
+
+    <div>
+        <h2>Check Bill</h2>
+        <div class="form-container" style="margin-bottom: 30px">
+            <div>
+                <label for="searchPhone">Phone Number</label>
+                <input type="text" id="searchPhone" placeholder="(XXX)XXX-XXXX">
+            </div>
+            <button onclick="checkBill()">Search</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Plan ID</th>
+                    <th>Total Owed</th>
+                </tr>
+            </thead>
+            <tbody id="checkBillTable"></tbody>
+        </table>
+    </div>
+
+    <!--Load on startup-->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            getCustomers();
-            getPlanOptions();
-            getPlan();
-            getCalls();
-            getUsage();
-            getCardInfo();
-            getBilling();
-            getHistory();
-
-            setInterval(getCustomers, 60000) // refresh every minute
+           getPlanOptions();
+           getPopularPlans();
         });
     </script>
 </body>
