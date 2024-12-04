@@ -96,6 +96,44 @@ async function getPopularPlans() {
     }
 }
 
+async function getEarningsPerPlan(year = 2024, month = 1) {
+    try {
+        const response = await fetch(`/EarningsPerPlan?year=${year}&month=${month}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching earnings per plan: ${response.statusText}`);
+        }
+
+        const earnings = await response.json();
+        console.log('Received Plan Earnings: ', earnings);
+
+        // Queried month display
+        const queriedMonthElement = document.getElementById('queriedMonth');
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        queriedMonthElement.textContent = `${monthNames[month - 1]} ${year}`;
+
+        // Populate the earnings table
+        const earningsTable = document.getElementById('planEarningsTable').querySelector('tbody');
+        earningsTable.innerHTML = '';
+
+        earnings.forEach(plan => {
+            const row = earningsTable.insertRow();
+            row.insertCell(0).textContent = plan["option"];
+            row.insertCell(1).textContent = plan["Total Earned"];
+        });
+    } catch (err) {
+        console.error('Error fetching earnings per plan: ', err);
+    }
+}
+
+function loadEarningsForSelectedMonth() {
+    const year = document.getElementById('yearSelect').value;
+    const month = document.getElementById('monthSelect').value;
+    getEarningsPerPlan(parseInt(year), parseInt(month));
+}
+
 let callUsageData = [];
 let rowsDisplayed = 0;
 
@@ -144,7 +182,7 @@ function toggleRows() {
         generateHeaders('callUsageTable', headers);
 
         const rowsToShow = Math.min(10, callUsageData.length);
-        for (let i = 0; i < rowsToShow; i++) {
+        for (let i = 0; i < rowsToShow; i++) { // Shows first 10
             const row = callUsageTable.insertRow();
             row.insertCell(0).textContent = callUsageData[i]["Phone"];
             row.insertCell(1).textContent = callUsageData[i]["Plan Option"];
@@ -155,7 +193,7 @@ function toggleRows() {
         }
         rowsDisplayed = rowsToShow;
 
-        // Load more
+        // Load 10 more
         if (rowsDisplayed < callUsageData.length) {
             loadMoreContainer.style.display = 'block';
         }
