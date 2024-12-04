@@ -343,7 +343,8 @@ async function makePayment() {
         alert('Please fill in all fields.');
         return;
     }
-
+ 
+ 
     const payment_date = new Date().toISOString().split('T')[0];
 
     const payment = {
@@ -660,6 +661,7 @@ async function updateBills() {
         alert('Error Updating Bills');
     }
 
+    console.log('After update request');
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =

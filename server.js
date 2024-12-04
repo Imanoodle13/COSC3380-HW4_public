@@ -13,6 +13,7 @@ app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Changed
+
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -20,12 +21,12 @@ const pool = new Pool({
     password: 'group16!',
     port: 5433
 });
-/*
+
 // http://localhost:3000/index.html
 // http://localhost:3000/admin.html
 // http://localhost:3000/customer.html
 // http://localhost:3000/tableView.html
-const pool = new Pool({
+/*const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     database: 'HW4',
