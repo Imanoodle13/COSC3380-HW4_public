@@ -790,6 +790,7 @@ async function generatePayments(paymentCount) {
 
         const customerBills = bills.filter(bill => bill.plan_id === customerPlan.id && bill.remaining_balance > 0);
 
+
         if (customerBills.length === 0) {
             console.warn(`No bills found for plan ID: ${customerPlan.id}`);
             continue;
@@ -802,6 +803,10 @@ async function generatePayments(paymentCount) {
         const partial_pay_chance = 0.10;
         if (Math.random() < partial_pay_chance) {
             paymentAmount = Math.random() * randomBill.remaining_balance * 0.85 + randomBill.remaining_balance * .15;
+        }
+        if (paymentAmount === 0 || randomBill.remaining_balance - paymentAmount < 0) {
+            console.warn(`Bill overpayment attempted, skipping`);
+            continue;
         }
 
         const paymentDate = new Date(randomDate(new Date(randomBill.start_date), new Date(randomBill.end_date))).toISOString().split('T')[0];

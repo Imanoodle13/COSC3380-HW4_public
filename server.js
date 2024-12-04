@@ -592,6 +592,8 @@ app.put('/card', async (req, res) => {
             )
         ]);
 
+        await client.query('DELETE FROM payment_hist WHERE amount = 0');
+
         await client.query('COMMIT');
         res.sendStatus(201);
     } catch (err) {
