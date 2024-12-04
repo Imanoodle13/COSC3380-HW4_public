@@ -723,6 +723,55 @@ async function generateCalls() {
     }
 }
 
+async function generatePayments(paymentCount) {
+    const [cardsResponse, customersResponse, plansResponse, billsResponse] = await Promise.all([
+        fetch('/cardInfo'),
+        fetch('/customer'),
+        fetch('/plan'),
+        fetch('/billInfo')
+    ]);
+
+    const cards = await cardsResponse.json();
+    const customers = await customersResponse.json();
+    const plans = await plansResponse.json();
+    const bills = await billsResponse.json();
+
+    for(let i = 0; i < paymentCount; i++) {
+        const randomCard = cards[randomInt(0, cards.length - 1)];
+
+        const randomCustomer = customers.find(c => c.phone === randomCard.phone);
+
+        const customerPlan = plans.find(plan => plan.id === randomCustomer.plan_id);
+
+        const customerBills = bills.filter(bill => bill.plan_id === customerPlan.id && bill.remaining_balance > 0);
+
+        let randomBill = customerBills[randomInt(0, customerBills.length - 1)];
+
+        let paymentAmount = randomBill.remaining_balance;
+
+        const partial_pay_chance = 0.10;
+        if (Math.random() < partial_pay_chance) {
+            paymentAmount = Math.random() * randomBill.remaining_balance * 0.85 + randomBill.remaining_balance * .15;
+        }
+
+        const paymentDate = new Date(randomDate(new Date(randomBill.start_date), new Date(randomBill.end_date))).toISOString().split('T')[0];
+
+        await fetch('/card', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: customerPlan.id,
+                start_date: randomBill.start_date,
+                card_id: randomCard.id,
+                payment_amount: paymentAmount,
+                payment_date: paymentDate
+            })
+        });
+
+    }
+}
 
 async function simulate() {
     try {
@@ -767,6 +816,11 @@ async function updateBills() {
     }
 
     console.log('After update request');
+
+    const paymentCount = document.getElementById('paymentCount').value;
+    await generatePayments(paymentCount);
+    console.log(`${paymentCount} Payments generated successfully.`);
+
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =
