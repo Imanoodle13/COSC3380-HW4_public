@@ -824,5 +824,72 @@ async function updateBills() {
     const endTime = performance.now();
     const elapsed = endTime - startTime;
     document.getElementById('billUpdateTimeTaken').innerText =
-            `Time to process: ${elapsed.toFixed()} ms`;
+        `Time to process: ${elapsed.toFixed()} ms`;
+}
+
+function setupPagination(options) {
+    // Default configuration
+    const defaults = {
+        tableSelector: '#data',
+        rowsPerPage: 4,
+        navContainerId: 'nav'
+    };
+
+    // Merge provided options with defaults
+    const settings = { ...defaults, ...options };
+
+    // Adjust the table selector
+    const $table = $(settings.tableSelector);
+
+    // Create navigation container if it doesn't exist
+    let $navContainer = $(`#${settings.navContainerId}`);
+    if ($navContainer.length === 0) {
+        $table.after(`<div id="${settings.navContainerId}"></div>`);
+        $navContainer = $(`#${settings.navContainerId}`);
+    }
+
+    // Get table rows and calculate pagination
+    const $rows = $table.find('tr');  // Exclude header row
+
+    const rowsTotal = $rows.length;
+    const numPages = Math.ceil(rowsTotal / settings.rowsPerPage);
+
+    // Clear existing navigation
+    $navContainer.empty();
+
+    // Only create pagination if we have more rows than per page
+    if (numPages > 1) {
+        // Create pagination links
+        for (let i = 0; i < numPages; i++) {
+            const pageNum = i + 1;
+            $navContainer.append(`<a href="#" rel="${i}">${pageNum}</a> `);
+        }
+
+        // Initially hide all rows and show first page
+        $rows.hide();
+        $rows.slice(0, settings.rowsPerPage).show();
+
+        // Mark first page as active
+        $navContainer.find('a:first').addClass('active');
+
+        // Bind click event to pagination links
+        $navContainer.on('click', 'a', function (e) {
+            e.preventDefault();
+
+            // Remove active class from all links
+            $navContainer.find('a').removeClass('active');
+            $(this).addClass('active');
+
+            // Calculate rows to show
+            const currPage = parseInt($(this).attr('rel'));
+            const startItem = currPage * settings.rowsPerPage;
+            const endItem = startItem + settings.rowsPerPage;
+
+            // Show selected page rows with animation
+            $rows.css('opacity', '0.0').hide()
+                .slice(startItem, endItem)
+                .css('display', 'table-row')
+                .animate({ opacity: 1 }, 300);
+        });
+    }
 }

@@ -147,17 +147,66 @@
 
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="frontendUtils.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            getCustomers();
-            getPlanOptions();
-            getPlan();
-            getCalls();
-            getUsage();
-            getCardInfo();
-            getBilling();
-            getHistory();
+            getCustomers().then(() => {
+                setupPagination({
+                    tableSelector: '#customerTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'customerTableNav'
+                });
+            });
+            getPlanOptions().then(() => {
+                setupPagination({
+                    tableSelector: '#planOptionTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'planOptionTableNav'
+                });
+            });
+            getPlan().then(() => {
+                setupPagination({
+                    tableSelector: '#planTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'planTableNav'
+                });
+            });
+            getCalls().then(() => {
+                setupPagination({
+                    tableSelector: '#callTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'callTableNav'
+                });
+            });
+            getUsage().then(() => {
+                setupPagination({
+                    tableSelector: '#usageTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'usageTableNav'
+                });
+            });
+            getCardInfo().then(() => {
+                setupPagination({
+                    tableSelector: '#bankTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'bankTableNav'
+                });
+            });
+            getBilling().then(() => {
+                setupPagination({
+                    tableSelector: '#billingTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'billingTableNav'
+                });
+            });
+            getHistory().then(() => {
+                setupPagination({
+                    tableSelector: '#paymentHistoryTable',
+                    rowsPerPage: 5,
+                    navContainerId: 'paymentHistoryTableNav'
+                });
+            });
 
             setInterval(getCustomers, 60000) // refresh every minute
         });
