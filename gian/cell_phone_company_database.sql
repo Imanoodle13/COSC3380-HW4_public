@@ -8,14 +8,16 @@ CREATE FUNCTION calculate_elapsed(time_start TIMESTAMP, time_end TIMESTAMP) RETU
 -- For use by calculate_call_cost(INT) function.
 -- Calculates the elapsed time in minutes.
 	DECLARE
-	    elapsed INT := 0
+		elapsed INT;
 	BEGIN
-	    IF time_start IS NOT NULL AND time_end IS NOT NULL THEN
-	       elapsed	INT	:= EXTRACT(EPOCH FROM (time_end::TIMESTAMP - time_start::TIMESTAMP)) / 60;
-	    END IF;
+		IF time_start IS NOT NULL AND time_end IS NOT NULL THEN
+			elapsed := EXTRACT(EPOCH FROM (time_end::TIMESTAMP - time_start::TIMESTAMP)) / 60;
+		ELSE
+			elapsed := 0;
+		END IF;
 		RETURN elapsed;
 	END;
-$$ LANGUAGE plpgsql;
+	$$ LANGUAGE plpgsql;
 
 CREATE FUNCTION calculate_call_cost(elapsed INT, plan_id INT) RETURNS DECIMAL(15,2) AS $$
 -- For use by calculate_total_cost(INT,INT) function.
