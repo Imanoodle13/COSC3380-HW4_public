@@ -19,6 +19,23 @@ h1 {
     font-weight: bold;
 }
 
+.container-tableView {
+    width: 90%;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); /* Each block is at least 600px wide */
+    gap: 20px;
+    grid-auto-flow: row; /* Normal flow without dense packing */
+}
+
+/* Maintain table styling */
+.table-section-tableView {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 .container {
     width: 90%;
     padding-top: 24px;
