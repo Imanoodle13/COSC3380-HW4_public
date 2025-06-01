@@ -5,10 +5,10 @@ The homework was initially submitted for phase 1 under group16. My group however
 to use this group (group 7) instead for submission purposes.
 
 To run the program: 
-*Run the 'cell_phone_company_database.sql' file to initialize the tables
-*Make sure the pool parameters are correct for your machine
-*Run the server.js file and connect to localhost:3000 
-*Connect in a non safari web browser (ours was tested on chrome on multiple machines).
+* Run the 'cell_phone_company_database.sql' file to initialize the tables
+* Make sure the pool parameters are correct for your machine
+* Run the server.js file and connect to localhost:3000 
+* Connect in a non safari web browser (ours was tested on chrome on multiple machines).
 
 
 ### Technology Stack: 
